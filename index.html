@@ -24,11 +24,13 @@
             --dark-bg: #1a1a2e; --dark-card: #16213e; --dark-text: #e0e0e0;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overscroll-behavior-y: contain; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg); color: var(--text); min-height: 100vh;
             transition: background 0.3s, color 0.3s;
             font-size: 16px;
+            overscroll-behavior-y: contain;
         }
         body.dark-mode { background: var(--dark-bg); color: var(--dark-text); }
         body.dark-mode .card, body.dark-mode .stat-card, body.dark-mode .product-card,
@@ -381,10 +383,21 @@ function doLogin() {
     const u=document.getElementById('loginUsername').value.trim(), p=document.getElementById('loginPassword').value.trim();
     if(DB.users.getAll().length===0){showSignUp();toast('Please sign up first.','info');return;}
     const user=DB.users.validate(u,p);
-    if(user){currentUser=user;document.getElementById('loginScreen').style.display='none';document.getElementById('appContainer').classList.add('active');initApp();toast('Welcome!','success');}
+    if(user){currentUser=user;DB.set('mp_current_user',user.username);document.getElementById('loginScreen').style.display='none';document.getElementById('appContainer').classList.add('active');initApp();toast('Welcome!','success');}
     else{document.getElementById('loginError').style.display='block';}
 }
-function doLogout() { if(confirm('Logout?')){currentUser=null;cart=[];document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
+function doLogout() { if(confirm('Logout?')){currentUser=null;cart=[];localStorage.removeItem('mp_current_user');document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
+function restoreLogin() {
+    const username=DB.get('mp_current_user');
+    if(!username) return false;
+    const user=DB.users.getAll().find(u=>u.username===username);
+    if(!user){localStorage.removeItem('mp_current_user');return false;}
+    currentUser=user;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('appContainer').classList.add('active');
+    initApp();
+    return true;
+}
 function showSignUp(prefillEmail='') {
     modal('Create Account',`<label>Full Name</label><input type="text" id="suName" placeholder="Your name"><label>Username</label><input type="text" id="suUser" placeholder="Username"><label>Email / Gmail</label><input type="email" id="suEmail" placeholder="name@gmail.com" value="${prefillEmail}"><label>Date of Birth</label><input type="date" id="suDob"><label>Password</label><input type="password" id="suPass" placeholder="Password"><label>Confirm Password</label><input type="password" id="suPass2" placeholder="Confirm password"><button class="btn btn-success btn-block" style="margin-top:12px" onclick="createAccount()">Create Account</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Save your birthday. It is needed for password reset.</p>`);
 }
@@ -823,7 +836,7 @@ function restoreBackupData(d) { if(d.products)DB.products.save(d.products);if(d.
 function restoreBackup() { const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(confirm('Restore?'))restoreBackupData(d);}catch(ex){toast('Invalid file!','error');}};r.readAsText(f);};i.click(); }
 
 // ===== INIT =====
-(function(){const s=DB.settings.get();if(s.logoUrl)setTimeout(()=>{const l=document.getElementById('shopLogoDisplay');if(l)l.innerHTML=`<img src="${s.logoUrl}">`;},100);if(s.darkMode)document.body.classList.add('dark-mode');})();
+(function(){const s=DB.settings.get();if(s.logoUrl)setTimeout(()=>{const l=document.getElementById('shopLogoDisplay');if(l)l.innerHTML=`<img src="${s.logoUrl}">`;},100);if(s.darkMode)document.body.classList.add('dark-mode');restoreLogin();})();
 console.log('✅ MyPOS ULTIMATE v4.0 - Enhanced Reports Ready!');
 console.log('📊 Reports: Daily | Weekly | Monthly | Yearly | Custom');
 </script>
