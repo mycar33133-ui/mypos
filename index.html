@@ -776,7 +776,19 @@ console.log('ðŸ“Š Reports: Daily | Weekly | Monthly | Yearly | Custom');
 </script>
     <script>
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
-        navigator.serviceWorker.register("./sw.js").catch(() => {});
+        navigator.serviceWorker.register("./sw.js").then(async (registration) => {
+            if ("sync" in registration) {
+                registration.sync.register("mypos-background-sync").catch(() => {});
+            }
+            if ("periodicSync" in registration) {
+                const status = await navigator.permissions?.query?.({ name: "periodic-background-sync" }).catch(() => null);
+                if (!status || status.state === "granted") {
+                    registration.periodicSync.register("mypos-periodic-backup", {
+                        minInterval: 24 * 60 * 60 * 1000
+                    }).catch(() => {});
+                }
+            }
+        }).catch(() => {});
     }
     </script>
 </body>

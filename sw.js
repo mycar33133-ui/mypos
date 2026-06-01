@@ -28,3 +28,20 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
+
+self.addEventListener("sync", (event) => {
+  if (event.tag === "mypos-background-sync") {
+    event.waitUntil(syncMyPOSData());
+  }
+});
+
+self.addEventListener("periodicsync", (event) => {
+  if (event.tag === "mypos-periodic-backup") {
+    event.waitUntil(syncMyPOSData());
+  }
+});
+
+async function syncMyPOSData() {
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(ASSETS);
+}
