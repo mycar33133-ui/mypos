@@ -1,0 +1,20 @@
+{
+  "name": "MyPOS Ultimate",
+  "short_name": "MyPOS",
+  "description": "Mobile point of sale app with products, cart, receipts, reports, customers, backups, and settings.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f2f5",
+  "theme_color": "#1565C0",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
