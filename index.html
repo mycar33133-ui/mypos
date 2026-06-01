@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -223,12 +223,12 @@
 <!-- LOGIN -->
 <div id="loginScreen" class="login-container">
     <div class="login-box">
-        <div class="logo">ðŸ›’</div>
+        <div class="logo">🛒</div>
         <h2>MyPOS Ultimate</h2>
         <p class="subtitle" style="color:var(--gray);margin-bottom:24px">All-in-One Business System</p>
         <input type="text" id="loginUsername" placeholder="Username" value="admin">
         <input type="password" id="loginPassword" placeholder="Password" value="admin">
-        <button class="login-btn" onclick="doLogin()">ðŸ” Sign In</button>
+        <button class="login-btn" onclick="doLogin()">🔐 Sign In</button>
         <p class="login-error" id="loginError">Invalid credentials!</p>
         <a class="login-link" onclick="showForgotPassword()">Forgot Password?</a>
     </div>
@@ -238,19 +238,19 @@
 <div class="app-container" id="appContainer">
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="shop-logo" id="shopLogoDisplay" onclick="document.getElementById('logoUpload').click()">ðŸª<input type="file" id="logoUpload" accept="image/*" style="display:none" onchange="handleLogo(event)"></div>
+            <div class="shop-logo" id="shopLogoDisplay" onclick="document.getElementById('logoUpload').click()">🏪<input type="file" id="logoUpload" accept="image/*" style="display:none" onchange="handleLogo(event)"></div>
             <h3 id="sidebarShopName" style="font-size:14px">My Shop</h3>
         </div>
         <div class="sidebar-nav">
-            <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">ðŸ“Š</span>Dashboard</div>
-            <div class="nav-item" onclick="nav('pos',this)"><span class="nav-icon">ðŸ›’</span>POS</div>
-            <div class="nav-item" onclick="nav('products',this)"><span class="nav-icon">ðŸ“¦</span>Products</div>
-            <div class="nav-item" onclick="nav('customers',this)"><span class="nav-icon">ðŸ‘¥</span>Customers</div>
-            <div class="nav-item" onclick="nav('suppliers',this)"><span class="nav-icon">ðŸ­</span>Suppliers</div>
-            <div class="nav-item" onclick="nav('delivery',this)"><span class="nav-icon">ðŸ›µ</span>Delivery</div>
-            <div class="nav-item" onclick="nav('employees',this)"><span class="nav-icon">ðŸ‘·</span>Employees</div>
-            <div class="nav-item" onclick="nav('reports',this)"><span class="nav-icon">ðŸ“ˆ</span>Reports</div>
-            <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">âš™ï¸</span>Settings</div>
+            <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
+            <div class="nav-item" onclick="nav('pos',this)"><span class="nav-icon">🛒</span>POS</div>
+            <div class="nav-item" onclick="nav('products',this)"><span class="nav-icon">📦</span>Products</div>
+            <div class="nav-item" onclick="nav('customers',this)"><span class="nav-icon">👥</span>Customers</div>
+            <div class="nav-item" onclick="nav('suppliers',this)"><span class="nav-icon">🏭</span>Suppliers</div>
+            <div class="nav-item" onclick="nav('delivery',this)"><span class="nav-icon">🛵</span>Delivery</div>
+            <div class="nav-item" onclick="nav('employees',this)"><span class="nav-icon">👷</span>Employees</div>
+            <div class="nav-item" onclick="nav('reports',this)"><span class="nav-icon">📈</span>Reports</div>
+            <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
         </div>
         <div class="sidebar-footer">v4.0 Ultimate | <a href="#" onclick="doLogout()" style="color:var(--red)">Logout</a></div>
     </div>
@@ -313,12 +313,12 @@ const DB = {
 // ===== GLOBAL STATE =====
 let currentUser=null, currentPage='dashboard', cart=[], heldOrders=[];
 let posCategoryFilter='';
-const CURRENCIES={USD:{symbol:'$',name:'USD'},EUR:{symbol:'â‚¬',name:'EUR'},GBP:{symbol:'Â£',name:'GBP'},INR:{symbol:'â‚¹',name:'INR'},IDR:{symbol:'Rp',name:'IDR'},JPY:{symbol:'Â¥',name:'JPY'},AUD:{symbol:'A$',name:'AUD'},CAD:{symbol:'C$',name:'CAD'}};
+const CURRENCIES={USD:{symbol:'$',name:'USD'},EUR:{symbol:'�',name:'EUR'},GBP:{symbol:'�',name:'GBP'},INR:{symbol:'₹',name:'INR'},IDR:{symbol:'Rp',name:'IDR'},JPY:{symbol:'�',name:'JPY'},AUD:{symbol:'A$',name:'AUD'},CAD:{symbol:'C$',name:'CAD'}};
 const CHART_COLORS=['#1565C0','#4CAF50','#FF9800','#F44336','#9C27B0','#00BCD4','#FF5722','#795548','#607D8B','#E91E63','#3F51B5','#CDDC39'];
 const LANGUAGES={
     en:{name:'English',dashboard:'Dashboard',pos:'POS',products:'Products',customers:'Customers',suppliers:'Suppliers',delivery:'Delivery',employees:'Employees',reports:'Reports',settings:'Settings',newSale:'New Sale',todaySales:"Today's Sales",orders:'orders',thisWeek:'This Week',lowStock:'low stock',account:'Account',shop:'Shop',theme:'Theme',backup:'Backup',language:'Language',currency:'Currency',nameLabel:'Name',phone:'Phone',darkMode:'Dark Mode',saveSettings:'Save Settings',download:'Download',restore:'Restore',googleDrive:'Google Drive Backup',cloudBackup:'Cloud Backup',restoreCloud:'Restore Cloud Backup',user:'User'},
     id:{name:'Indonesia',dashboard:'Dasbor',pos:'POS',products:'Produk',customers:'Pelanggan',suppliers:'Pemasok',delivery:'Pengiriman',employees:'Karyawan',reports:'Laporan',settings:'Pengaturan',newSale:'Penjualan Baru',todaySales:'Penjualan Hari Ini',orders:'pesanan',thisWeek:'Minggu Ini',lowStock:'stok rendah',account:'Akun',shop:'Toko',theme:'Tema',backup:'Cadangan',language:'Bahasa',currency:'Mata Uang',nameLabel:'Nama',phone:'Telepon',darkMode:'Mode Gelap',saveSettings:'Simpan Pengaturan',download:'Unduh',restore:'Pulihkan',googleDrive:'Cadangan Google Drive',cloudBackup:'Cadangan Cloud',restoreCloud:'Pulihkan Cadangan Cloud',user:'Pengguna'},
-    th:{name:'à¹„à¸—à¸¢',dashboard:'à¹à¸”à¸Šà¸šà¸­à¸£à¹Œà¸”',pos:'POS',products:'à¸ªà¸´à¸™à¸„à¹‰à¸²',customers:'à¸¥à¸¹à¸à¸„à¹‰à¸²',suppliers:'à¸‹à¸±à¸žà¸žà¸¥à¸²à¸¢à¹€à¸­à¸­à¸£à¹Œ',delivery:'à¸ˆà¸±à¸”à¸ªà¹ˆà¸‡',employees:'à¸žà¸™à¸±à¸à¸‡à¸²à¸™',reports:'à¸£à¸²à¸¢à¸‡à¸²à¸™',settings:'à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²',newSale:'à¸‚à¸²à¸¢à¹ƒà¸«à¸¡à¹ˆ',todaySales:'à¸¢à¸­à¸”à¸‚à¸²à¸¢à¸§à¸±à¸™à¸™à¸µà¹‰',orders:'à¸­à¸­à¹€à¸”à¸­à¸£à¹Œ',thisWeek:'à¸ªà¸±à¸›à¸”à¸²à¸«à¹Œà¸™à¸µà¹‰',lowStock:'à¸ªà¸´à¸™à¸„à¹‰à¸²à¹ƒà¸à¸¥à¹‰à¸«à¸¡à¸”',account:'à¸šà¸±à¸à¸Šà¸µ',shop:'à¸£à¹‰à¸²à¸™à¸„à¹‰à¸²',theme:'à¸˜à¸µà¸¡',backup:'à¸ªà¸³à¸£à¸­à¸‡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥',language:'à¸ à¸²à¸©à¸²',currency:'à¸ªà¸à¸¸à¸¥à¹€à¸‡à¸´à¸™',nameLabel:'à¸Šà¸·à¹ˆà¸­',phone:'à¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œ',darkMode:'à¹‚à¸«à¸¡à¸”à¸¡à¸·à¸”',saveSettings:'à¸šà¸±à¸™à¸—à¸¶à¸à¸à¸²à¸£à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²',download:'à¸”à¸²à¸§à¸™à¹Œà¹‚à¸«à¸¥à¸”',restore:'à¸à¸¹à¹‰à¸„à¸·à¸™',googleDrive:'à¸ªà¸³à¸£à¸­à¸‡ Google Drive',cloudBackup:'à¸ªà¸³à¸£à¸­à¸‡ Cloud',restoreCloud:'à¸à¸¹à¹‰à¸„à¸·à¸™ Cloud',user:'à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰'}
+    th:{name:'ไทย',dashboard:'แดชบอร์ด',pos:'POS',products:'สินค้า',customers:'ลูกค้า',suppliers:'ซัพพลายเออร์',delivery:'จัดส่ง',employees:'พนักงาน',reports:'รายงาน',settings:'ตั้งค่า',newSale:'ขายใหม่',todaySales:'ยอดขายวันนี้',orders:'ออเดอร์',thisWeek:'สัปดาห์นี้',lowStock:'สินค้าใกล้หมด',account:'บัญชี',shop:'ร้านค้า',theme:'ธีม',backup:'สำรองข้อมูล',language:'ภาษา',currency:'สกุลเงิน',nameLabel:'ชื่อ',phone:'โทรศัพท์',darkMode:'โหมดมืด',saveSettings:'บันทึกการตั้งค่า',download:'ดาวน์โหลด',restore:'กู้คืน',googleDrive:'สำรอง Google Drive',cloudBackup:'สำรอง Cloud',restoreCloud:'กู้คืน Cloud',user:'ผู้ใช้'}
 };
 
 // ===== UTILS =====
@@ -327,15 +327,15 @@ function tr(k) { const s=DB.settings.get(); return (LANGUAGES[s.language]&&LANGU
 function fd(iso) { return new Date(iso).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function fds(iso) { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
 function toast(m,t='info') { const el=document.createElement('div'); el.className='toast '+t; el.textContent=m; document.getElementById('toastContainer').appendChild(el); setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},3000); }
-function modal(title,content) { document.getElementById('globalModalContent').innerHTML=`<button class="modal-close" onclick="closeModal()">âœ•</button><h2 style="margin-bottom:16px">${title}</h2>${content}`; document.getElementById('globalModal').classList.add('active'); }
+function modal(title,content) { document.getElementById('globalModalContent').innerHTML=`<button class="modal-close" onclick="closeModal()">✕</button><h2 style="margin-bottom:16px">${title}</h2>${content}`; document.getElementById('globalModal').classList.add('active'); }
 function closeModal() { document.getElementById('globalModal').classList.remove('active'); }
 function ac(n) { const c=['#F44336','#E91E63','#9C27B0','#673AB7','#3F51B5','#2196F3','#009688','#4CAF50','#FF9800','#795548']; return c[Math.abs(n.split('').reduce((a,b)=>a+b.charCodeAt(0),0))%c.length]; }
 function init(n) { return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 function getCategories() { return DB.categories.getAll().map(c=>typeof c==='string'?{id:c,name:c,imageUrl:''}:c); }
 function saveCategories(cats) { DB.categories.save(cats); }
 function readImageInput(id,cb) { const f=document.getElementById(id)?.files?.[0]; if(!f)return cb(''); const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f); }
-function productPhoto(p) { return p?.imageUrl?`<img src="${p.imageUrl}">`:'ðŸ“¦'; }
-function categoryPhoto(c) { return c?.imageUrl?`<img src="${c.imageUrl}">`:'ðŸ·ï¸'; }
+function productPhoto(p) { return p?.imageUrl?`<img src="${p.imageUrl}">`:'📦'; }
+function categoryPhoto(c) { return c?.imageUrl?`<img src="${c.imageUrl}">`:'🏷️'; }
 function newId(prefix='id') { return prefix+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
 function ensureUniqueProductIds() {
     const seen=new Set();
@@ -372,7 +372,7 @@ function doLogin() {
 }
 function doLogout() { if(confirm('Logout?')){currentUser=null;cart=[];document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
 function showForgotPassword() {
-    modal('ðŸ”‘ Reset Password',`<input type="text" id="resetUser" placeholder="Username"><button class="btn btn-primary btn-block" onclick="resetPassword()">Reset</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Default: admin / admin</p>`);
+    modal('🔑 Reset Password',`<input type="text" id="resetUser" placeholder="Username"><button class="btn btn-primary btn-block" onclick="resetPassword()">Reset</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Default: admin / admin</p>`);
 }
 function resetPassword() {
     const u=document.getElementById('resetUser')?.value.trim();
@@ -382,7 +382,7 @@ function resetPassword() {
     else toast('User not found!','error');
 }
 function showChangePassword() {
-    modal('ðŸ”’ Change Password',`<label>Current</label><input type="password" id="cpOld"><label>New</label><input type="password" id="cpNew"><label>Confirm</label><input type="password" id="cpConfirm"><button class="btn btn-success btn-block" style="margin-top:12px" onclick="changePassword()">Update</button>`);
+    modal('🔒 Change Password',`<label>Current</label><input type="password" id="cpOld"><label>New</label><input type="password" id="cpNew"><label>Confirm</label><input type="password" id="cpConfirm"><button class="btn btn-success btn-block" style="margin-top:12px" onclick="changePassword()">Update</button>`);
 }
 function changePassword() {
     const old=document.getElementById('cpOld')?.value, np=document.getElementById('cpNew')?.value, cp=document.getElementById('cpConfirm')?.value;
@@ -390,7 +390,7 @@ function changePassword() {
     if(np!==cp){toast('Passwords do not match!','error');return;}
     if(np.length<3){toast('Min 3 characters!','error');return;}
     if(old!==currentUser.password){toast('Wrong current password!','error');return;}
-    DB.users.updateUser(currentUser.username,{password:np});currentUser.password=np;closeModal();toast('Password changed! ðŸ”’','success');
+    DB.users.updateUser(currentUser.username,{password:np});currentUser.password=np;closeModal();toast('Password changed! 🔒','success');
 }
 
 // ===== INIT =====
@@ -423,74 +423,74 @@ function nav(page,el) { currentPage=page; document.querySelectorAll('.nav-item')
 
 // ===== DASHBOARD =====
 function dash(c) { const o=DB.orders.getAll(), today=new Date().toDateString(), to=o.filter(x=>new Date(x.timestamp).toDateString()===today), ts=to.reduce((s,x)=>s+x.total,0), wk=o.filter(x=>new Date(x.timestamp)>new Date(Date.now()-7*86400000)), lo=DB.products.getAll().filter(p=>(p.stock||0)<=(p.lowStockAlert||5));
-c.innerHTML=`<div class="page-header"><h1>ðŸ“Š ${tr('dashboard')}</h1><div><button class="btn btn-primary btn-sm" onclick="nav('pos')">ðŸ›’ ${tr('newSale')}</button><button class="btn btn-outline btn-sm" style="margin-left:4px" onclick="nav('reports')">ðŸ“ˆ ${tr('reports')}</button></div></div>
-<div class="stats-grid"><div class="stat-card"><div class="stat-icon">ðŸ’°</div><div class="stat-value">${fm(ts)}</div><div class="stat-label">${tr('todaySales')}</div><small>${to.length} ${tr('orders')}</small></div>
-<div class="stat-card"><div class="stat-icon">ðŸ“‹</div><div class="stat-value">${wk.length}</div><div class="stat-label">${tr('thisWeek')}</div><small>${fm(wk.reduce((s,x)=>s+x.total,0))}</small></div>
-<div class="stat-card"><div class="stat-icon">ðŸ“¦</div><div class="stat-value">${DB.products.getAll().length}</div><div class="stat-label">${tr('products')}</div><small>${lo.length} ${tr('lowStock')}</small></div>
-<div class="stat-card"><div class="stat-icon">ðŸ‘¥</div><div class="stat-value">${DB.customers.getAll().length}</div><div class="stat-label">${tr('customers')}</div></div></div>
-<div class="card"><div class="card-title">ðŸ“ˆ Sales Trend (30 Days)</div><div class="chart-container"><canvas id="dashChart"></canvas></div></div>`;
+c.innerHTML=`<div class="page-header"><h1>📊 ${tr('dashboard')}</h1><div><button class="btn btn-primary btn-sm" onclick="nav('pos')">🛒 ${tr('newSale')}</button><button class="btn btn-outline btn-sm" style="margin-left:4px" onclick="nav('reports')">📈 ${tr('reports')}</button></div></div>
+<div class="stats-grid"><div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${fm(ts)}</div><div class="stat-label">${tr('todaySales')}</div><small>${to.length} ${tr('orders')}</small></div>
+<div class="stat-card"><div class="stat-icon">📋</div><div class="stat-value">${wk.length}</div><div class="stat-label">${tr('thisWeek')}</div><small>${fm(wk.reduce((s,x)=>s+x.total,0))}</small></div>
+<div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">${DB.products.getAll().length}</div><div class="stat-label">${tr('products')}</div><small>${lo.length} ${tr('lowStock')}</small></div>
+<div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${DB.customers.getAll().length}</div><div class="stat-label">${tr('customers')}</div></div></div>
+<div class="card"><div class="card-title">📈 Sales Trend (30 Days)</div><div class="chart-container"><canvas id="dashChart"></canvas></div></div>`;
 setTimeout(()=>{const ctx=document.getElementById('dashChart');if(ctx)new Chart(ctx,{type:'line',data:{labels:Array.from({length:30},(_,i)=>fds(new Date(Date.now()-(29-i)*86400000))),datasets:[{label:'Sales',data:Array.from({length:30},(_,i)=>{const d=new Date(Date.now()-(29-i)*86400000).toDateString();return o.filter(x=>new Date(x.timestamp).toDateString()===d).reduce((s,x)=>s+x.total,0)}),borderColor:'#1565C0',backgroundColor:'rgba(21,101,192,0.1)',fill:true,tension:0.4}]},options:{responsive:true,plugins:{legend:{display:false}}}});},100); }
 
 // ===== POS (SIMPLIFIED) =====
 function pos(c) {
-c.innerHTML=`<div class="page-header"><h1>ðŸ›’ Point of Sale</h1><button class="btn btn-outline btn-sm" onclick="scanBarcode()">ðŸ“· Scan</button></div>
+c.innerHTML=`<div class="page-header"><h1>🛒 Point of Sale</h1><button class="btn btn-outline btn-sm" onclick="scanBarcode()">📷 Scan</button></div>
 <div style="display:grid;grid-template-columns:1fr 350px;gap:16px"><div class="card"><div class="card-title">Products</div>
-<div class="product-grid" style="max-height:400px;overflow-y:auto">${DB.products.getAll().map(p=>`<div class="product-card" onclick="addToCart(${p.id})"><div class="product-img">ðŸ“¦</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div></div>`).join('')}</div></div>
-<div class="card"><div class="card-title">ðŸ›’ Cart</div><div id="cartItems">${renderCart()}</div>
+<div class="product-grid" style="max-height:400px;overflow-y:auto">${DB.products.getAll().map(p=>`<div class="product-card" onclick="addToCart(${p.id})"><div class="product-img">📦</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div></div>`).join('')}</div></div>
+<div class="card"><div class="card-title">🛒 Cart</div><div id="cartItems">${renderCart()}</div>
 <div class="summary-row total"><span>TOTAL:</span><span>${fm(getSubtotal())}</span></div>
-<button class="btn btn-success btn-block" onclick="processPayment()">ðŸ’³ Complete - ${fm(getSubtotal())}</button></div></div>`;
+<button class="btn btn-success btn-block" onclick="processPayment()">💳 Complete - ${fm(getSubtotal())}</button></div></div>`;
 }
 function addToCart(pid) { ensureUniqueProductIds(); const p=DB.products.getAll().find(x=>String(x.id)===String(pid)); if(!p)return; const idx=cart.findIndex(i=>String(i.product.id)===String(pid)); if(idx>=0){const item=cart.splice(idx,1)[0];item.product=p;item.qty++;cart.unshift(item);}else{cart.unshift({product:p,qty:1});} pos(document.getElementById('mainContent')); }
-function renderCart() { if(cart.length===0) return '<p style="color:gray;text-align:center;padding:20px">Cart empty</p>'; return cart.map((i,idx)=>`<div class="cart-item"><div class="cart-item-name">${i.product.name} x${i.qty}</div><div class="cart-item-total">${fm(i.product.price*i.qty)}</div><span style="color:var(--red);cursor:pointer" onclick="cart.splice(${idx},1);pos(document.getElementById('mainContent'))">âœ•</span></div>`).join(''); }
+function renderCart() { if(cart.length===0) return '<p style="color:gray;text-align:center;padding:20px">Cart empty</p>'; return cart.map((i,idx)=>`<div class="cart-item"><div class="cart-item-name">${i.product.name} x${i.qty}</div><div class="cart-item-total">${fm(i.product.price*i.qty)}</div><span style="color:var(--red);cursor:pointer" onclick="cart.splice(${idx},1);pos(document.getElementById('mainContent'))">✕</span></div>`).join(''); }
 function getSubtotal() { return cart.reduce((s,i)=>s+(i.product.price*i.qty),0); }
-function processPayment() { if(cart.length===0){toast('Cart empty!','error');return;} const total=getSubtotal(); modal('ðŸ’³ Payment',`<div style="text-align:center;font-size:36px;font-weight:bold;color:var(--primary)">${fm(total)}</div><label>Customer Name</label><input type="text" id="saleCustomerName" placeholder="Walk-in"><label>Phone Number</label><input type="tel" id="saleCustomerPhone" placeholder="Customer phone"><label>Payment Method</label><select id="payMethod"><option>Cash</option><option>Card</option><option>UPI</option></select><button class="btn btn-success btn-block" onclick="completeSale()">âœ… Complete & Receipt</button>`); }
+function processPayment() { if(cart.length===0){toast('Cart empty!','error');return;} const total=getSubtotal(); modal('💳 Payment',`<div style="text-align:center;font-size:36px;font-weight:bold;color:var(--primary)">${fm(total)}</div><label>Customer Name</label><input type="text" id="saleCustomerName" placeholder="Walk-in"><label>Phone Number</label><input type="tel" id="saleCustomerPhone" placeholder="Customer phone"><label>Payment Method</label><select id="payMethod"><option>Cash</option><option>Card</option><option>UPI</option></select><button class="btn btn-success btn-block" onclick="completeSale()">✅ Complete & Receipt</button>`); }
 function findOrSaveCustomer(name,phone) { name=(name||'').trim(); phone=(phone||'').trim(); if(!name&&!phone)return null; const all=DB.customers.getAll(); let c=all.find(x=>phone&&x.phone===phone); if(c){ if(name)c.name=name; DB.customers.update(c); return c; } return DB.customers.add({name:name||'Walk-in Customer',phone,email:'',birthday:''}); }
-function completeSale() { const total=getSubtotal(),method=document.getElementById('payMethod')?.value||'Cash', customer=findOrSaveCustomer(document.getElementById('saleCustomerName')?.value,document.getElementById('saleCustomerPhone')?.value); const order=DB.orders.add({items:cart.map(i=>({name:i.product.name,qty:i.qty,price:i.product.price,total:i.product.price*i.qty})),subtotal:total,discount:0,tax:0,total,paymentMethod:method,customerName:customer?.name||'Walk-in',customerPhone:customer?.phone||'',timestamp:new Date().toISOString()}); cart.forEach(i=>{const p=DB.products.getAll().find(x=>x.id===i.product.id);if(p){p.stock=Math.max(0,(p.stock||0)-i.qty);DB.products.update(p);}}); cart=[];pos(document.getElementById('mainContent'));showReceipt(order);toast('Sale complete! ðŸŽ‰','success'); }
+function completeSale() { const total=getSubtotal(),method=document.getElementById('payMethod')?.value||'Cash', customer=findOrSaveCustomer(document.getElementById('saleCustomerName')?.value,document.getElementById('saleCustomerPhone')?.value); const order=DB.orders.add({items:cart.map(i=>({name:i.product.name,qty:i.qty,price:i.product.price,total:i.product.price*i.qty})),subtotal:total,discount:0,tax:0,total,paymentMethod:method,customerName:customer?.name||'Walk-in',customerPhone:customer?.phone||'',timestamp:new Date().toISOString()}); cart.forEach(i=>{const p=DB.products.getAll().find(x=>x.id===i.product.id);if(p){p.stock=Math.max(0,(p.stock||0)-i.qty);DB.products.update(p);}}); cart=[];pos(document.getElementById('mainContent'));showReceipt(order);toast('Sale complete! 🎉','success'); }
 function qrMarkup(text) { let seed=0; for(const ch of text) seed=(seed*31+ch.charCodeAt(0))>>>0; let cells=''; for(let y=0;y<21;y++){ for(let x=0;x<21;x++){ const finder=(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13); const inner=finder&&x%6>0&&x%6<6&&y%6>0&&y%6<6; const on=finder?(x%6===0||y%6===0||inner&&x%6>1&&x%6<5&&y%6>1&&y%6<5):(((x*17+y*29+seed+(x*y))%5)<2); cells+=`<span class="qr-cell ${on?'on':''}"></span>`; }} return `<div class="qr-receipt">${cells}</div>`; }
-function receiptHtml(order) { const s=DB.settings.get(), totalQty=order.items.reduce((a,i)=>a+Number(i.qty||0),0), invNo=String(order.orderNumber||order.id||'').replace(/\D/g,'').slice(-6)||order.id; return `<div class="receipt-print">${s.logoUrl?`<img class="receipt-logo" src="${s.logoUrl}">`:''}<h3>${s.shopName||'My Shop'}</h3><p class="receipt-center">Simplified Tax Invoice</p>${s.taxNo?`<p class="receipt-center">TAX No:${s.taxNo}</p>`:''}${s.address?`<p class="receipt-center">${s.address}</p>`:''}${s.phone?`<p class="receipt-center">${s.phone}</p>`:''}<div class="receipt-meta"><p>Inv.Id#${order.id}</p><p>Inv No:${invNo}</p><p>Date:${new Date(order.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'long',hour:'2-digit',minute:'2-digit'})}</p><p>Currency:${DB.settings.get().currency||'USD'}</p><p>Payment Method:${order.paymentMethod}</p>${order.customerName&&order.customerName!=='Walk-in'?`<p>Customer:${order.customerName}${order.customerPhone?' Â· '+order.customerPhone:''}</p>`:''}</div><table class="receipt-table"><thead><tr><th>Qty X Item</th><th>Price</th><th class="num">Amt</th></tr></thead><tbody>${order.items.map(i=>`<tr><td>${Number(i.qty||0).toFixed(1)}X ${i.name}</td><td>${Number(i.price||0).toFixed(2)}</td><td class="num">${Number(i.total||0).toFixed(2)}</td></tr>`).join('')}<tr class="receipt-summary"><td colspan="2">Total Qty: ${totalQty.toFixed(2)}</td><td class="num">Total Items: ${order.items.length}</td></tr><tr class="receipt-total-row"><td colspan="2" class="num">Sub Total</td><td class="num">${Number(order.subtotal||0).toFixed(2)}</td></tr><tr class="receipt-total-row"><td colspan="2" class="num">Payable</td><td class="num">${Number(order.total||0).toFixed(2)}</td></tr></tbody></table>${qrMarkup(receiptText(order))}<p class="receipt-footer">${s.footerText||'Thanks for purchase ðŸ’•'}</p></div>`; }
+function receiptHtml(order) { const s=DB.settings.get(), totalQty=order.items.reduce((a,i)=>a+Number(i.qty||0),0), invNo=String(order.orderNumber||order.id||'').replace(/\D/g,'').slice(-6)||order.id; return `<div class="receipt-print">${s.logoUrl?`<img class="receipt-logo" src="${s.logoUrl}">`:''}<h3>${s.shopName||'My Shop'}</h3><p class="receipt-center">Simplified Tax Invoice</p>${s.taxNo?`<p class="receipt-center">TAX No:${s.taxNo}</p>`:''}${s.address?`<p class="receipt-center">${s.address}</p>`:''}${s.phone?`<p class="receipt-center">${s.phone}</p>`:''}<div class="receipt-meta"><p>Inv.Id#${order.id}</p><p>Inv No:${invNo}</p><p>Date:${new Date(order.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'long',hour:'2-digit',minute:'2-digit'})}</p><p>Currency:${DB.settings.get().currency||'USD'}</p><p>Payment Method:${order.paymentMethod}</p>${order.customerName&&order.customerName!=='Walk-in'?`<p>Customer:${order.customerName}${order.customerPhone?' · '+order.customerPhone:''}</p>`:''}</div><table class="receipt-table"><thead><tr><th>Qty X Item</th><th>Price</th><th class="num">Amt</th></tr></thead><tbody>${order.items.map(i=>`<tr><td>${Number(i.qty||0).toFixed(1)}X ${i.name}</td><td>${Number(i.price||0).toFixed(2)}</td><td class="num">${Number(i.total||0).toFixed(2)}</td></tr>`).join('')}<tr class="receipt-summary"><td colspan="2">Total Qty: ${totalQty.toFixed(2)}</td><td class="num">Total Items: ${order.items.length}</td></tr><tr class="receipt-total-row"><td colspan="2" class="num">Sub Total</td><td class="num">${Number(order.subtotal||0).toFixed(2)}</td></tr><tr class="receipt-total-row"><td colspan="2" class="num">Payable</td><td class="num">${Number(order.total||0).toFixed(2)}</td></tr></tbody></table>${qrMarkup(receiptText(order))}<p class="receipt-footer">${s.footerText||'Thanks for purchase 💕'}</p></div>`; }
 function receiptText(order) { const s=DB.settings.get(); return `${s.shopName||'My Shop'}\nReceipt ${order.orderNumber}\n${s.phone?`Phone: ${s.phone}\n`:''}${s.address?`${s.address}\n`:''}\nCustomer: ${order.customerName||'Walk-in'}${order.customerPhone?' - '+order.customerPhone:''}\n\n${order.items.map(i=>`${i.name} x${i.qty} = ${fm(i.total)}`).join('\n')}\n\nSubtotal: ${fm(order.subtotal)}\nTax: ${fm(order.tax||0)}\nTotal: ${fm(order.total)}\nPaid by: ${order.paymentMethod}\n\n${s.footerText||'Thank you!'}`; }
 function whatsappReceipt(orderId) { const order=DB.orders.getAll().find(o=>o.id===orderId); if(!order){toast('Receipt not found!','error');return;} const phone=(order.customerPhone||'').replace(/\D/g,''); const text=encodeURIComponent(receiptText(order)); window.open(phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`,'_blank'); }
-function showReceipt(order) { modal('ðŸ§¾ Receipt',`${receiptHtml(order)}<div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="window.print()">ðŸ–¨ï¸ Print Receipt</button><button class="btn btn-success" onclick="whatsappReceipt(${order.id})">ðŸ’¬ WhatsApp Receipt</button></div>`); }
-function scanBarcode() { modal('ðŸ“· Scanner',`<div id="scanner"></div><input type="text" id="manualBarcode" placeholder="Barcode..."><button class="btn btn-primary btn-block" onclick="addByBarcode()">Add</button>`); try{new ZXing.BrowserMultiFormatReader().decodeFromVideoDevice(null,'scanner',(r,e)=>{if(r){const p=DB.products.getAll().find(x=>x.barcode===r.text);if(p){addToCart(p.id);closeModal();}}});}catch(e){document.getElementById('scanner').innerHTML='<p>Camera not available</p>';} }
+function showReceipt(order) { modal('🧾 Receipt',`${receiptHtml(order)}<div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="window.print()">🖨️ Print Receipt</button><button class="btn btn-success" onclick="whatsappReceipt(${order.id})">💬 WhatsApp Receipt</button></div>`); }
+function scanBarcode() { modal('📷 Scanner',`<div id="scanner"></div><input type="text" id="manualBarcode" placeholder="Barcode..."><button class="btn btn-primary btn-block" onclick="addByBarcode()">Add</button>`); try{new ZXing.BrowserMultiFormatReader().decodeFromVideoDevice(null,'scanner',(r,e)=>{if(r){const p=DB.products.getAll().find(x=>x.barcode===r.text);if(p){addToCart(p.id);closeModal();}}});}catch(e){document.getElementById('scanner').innerHTML='<p>Camera not available</p>';} }
 function addByBarcode() { const b=document.getElementById('manualBarcode')?.value;if(b){const p=DB.products.getAll().find(x=>x.barcode===b);if(p){addToCart(p.id);closeModal();}else toast('Not found!','error');} }
 
 // ===== PRODUCTS =====
-function prods(c) { const ps=DB.products.getAll(); c.innerHTML=`<div class="page-header"><h1>ðŸ“¦ Products (${ps.length})</h1><button class="btn btn-primary btn-sm" onclick="showProdForm()">+ Add</button></div><div class="product-grid">${ps.map(p=>`<div class="product-card"><div class="product-img">ðŸ“¦</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div><div class="product-stock">Stock:${p.stock||0}</div><button class="btn btn-xs btn-outline btn-block" onclick="showProdForm(${p.id})">âœï¸</button></div>`).join('')}</div>`; }
-function showProdForm(eid=null) { const p=eid?DB.products.getAll().find(x=>x.id===eid):null; modal(p?'âœï¸ Edit':'âž• Add',`<label>Name</label><input type="text" id="pfName" value="${p?.name||''}"><label>Price</label><input type="number" id="pfPrice" value="${p?.price||''}" step="0.01"><label>Stock</label><input type="number" id="pfStock" value="${p?.stock||0}"><button class="btn btn-success btn-block" onclick="saveProd(${eid||'null'})">Save</button>`); }
+function prods(c) { const ps=DB.products.getAll(); c.innerHTML=`<div class="page-header"><h1>📦 Products (${ps.length})</h1><button class="btn btn-primary btn-sm" onclick="showProdForm()">+ Add</button></div><div class="product-grid">${ps.map(p=>`<div class="product-card"><div class="product-img">📦</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div><div class="product-stock">Stock:${p.stock||0}</div><button class="btn btn-xs btn-outline btn-block" onclick="showProdForm(${p.id})">✏️</button></div>`).join('')}</div>`; }
+function showProdForm(eid=null) { const p=eid?DB.products.getAll().find(x=>x.id===eid):null; modal(p?'✏️ Edit':'➕ Add',`<label>Name</label><input type="text" id="pfName" value="${p?.name||''}"><label>Price</label><input type="number" id="pfPrice" value="${p?.price||''}" step="0.01"><label>Stock</label><input type="number" id="pfStock" value="${p?.stock||0}"><button class="btn btn-success btn-block" onclick="saveProd(${eid||'null'})">Save</button>`); }
 function saveProd(eid) { const d={name:document.getElementById('pfName').value.trim(),price:parseFloat(document.getElementById('pfPrice').value),stock:parseInt(document.getElementById('pfStock').value)||0}; eid?(Object.assign(DB.products.getAll().find(x=>x.id===eid),d),DB.products.update(DB.products.getAll().find(x=>x.id===eid))):DB.products.add(d); closeModal();prods(document.getElementById('mainContent'));toast('Saved!','success'); }
 
 // ===== CUSTOMERS =====
-function custs(c) { c.innerHTML=`<div class="page-header"><h1>ðŸ‘¥ Customers</h1><button class="btn btn-primary btn-sm" onclick="showCustForm()">+ Add</button></div>${DB.customers.getAll().map(c=>`<div class="customer-item"><div class="customer-avatar" style="background:${ac(c.name)}">${init(c.name)}</div><div class="customer-info"><strong>${c.name}</strong><br>ðŸ“± ${c.phone||'N/A'}</div><button class="btn btn-xs btn-outline" onclick="showCustForm(${c.id})">âœï¸</button></div>`).join('')}`; }
-function showCustForm(eid=null) { const c=eid?DB.customers.getAll().find(x=>x.id===eid):null; modal(c?'âœï¸ Edit':'âž• Add',`<label>Name</label><input type="text" id="cfName" value="${c?.name||''}"><label>Phone</label><input type="tel" id="cfPhone" value="${c?.phone||''}"><button class="btn btn-success btn-block" onclick="saveCust(${eid||'null'})">Save</button>`); }
+function custs(c) { c.innerHTML=`<div class="page-header"><h1>👥 Customers</h1><button class="btn btn-primary btn-sm" onclick="showCustForm()">+ Add</button></div>${DB.customers.getAll().map(c=>`<div class="customer-item"><div class="customer-avatar" style="background:${ac(c.name)}">${init(c.name)}</div><div class="customer-info"><strong>${c.name}</strong><br>📱 ${c.phone||'N/A'}</div><button class="btn btn-xs btn-outline" onclick="showCustForm(${c.id})">✏️</button></div>`).join('')}`; }
+function showCustForm(eid=null) { const c=eid?DB.customers.getAll().find(x=>x.id===eid):null; modal(c?'✏️ Edit':'➕ Add',`<label>Name</label><input type="text" id="cfName" value="${c?.name||''}"><label>Phone</label><input type="tel" id="cfPhone" value="${c?.phone||''}"><button class="btn btn-success btn-block" onclick="saveCust(${eid||'null'})">Save</button>`); }
 function saveCust(eid) { const d={name:document.getElementById('cfName').value.trim(),phone:document.getElementById('cfPhone').value.trim()}; eid?(Object.assign(DB.customers.getAll().find(x=>x.id===eid),d),DB.customers.update(DB.customers.getAll().find(x=>x.id===eid))):DB.customers.add(d); closeModal();custs(document.getElementById('mainContent'));toast('Saved!','success'); }
 
 // ===== SUPPLIERS =====
-function supps(c) { c.innerHTML=`<div class="page-header"><h1>ðŸ­ Suppliers</h1><button class="btn btn-primary btn-sm" onclick="showSuppForm()">+ Add</button></div>${DB.suppliers.getAll().map(s=>`<div class="customer-item"><strong>${s.name}</strong><button class="btn btn-xs btn-outline" onclick="showSuppForm(${s.id})">âœï¸</button></div>`).join('')}`; }
-function showSuppForm(eid=null) { const s=eid?DB.suppliers.getAll().find(x=>x.id===eid):null; modal(s?'âœï¸ Edit':'âž• Add',`<label>Name</label><input type="text" id="sfName" value="${s?.name||''}"><button class="btn btn-success btn-block" onclick="saveSupp(${eid||'null'})">Save</button>`); }
+function supps(c) { c.innerHTML=`<div class="page-header"><h1>🏭 Suppliers</h1><button class="btn btn-primary btn-sm" onclick="showSuppForm()">+ Add</button></div>${DB.suppliers.getAll().map(s=>`<div class="customer-item"><strong>${s.name}</strong><button class="btn btn-xs btn-outline" onclick="showSuppForm(${s.id})">✏️</button></div>`).join('')}`; }
+function showSuppForm(eid=null) { const s=eid?DB.suppliers.getAll().find(x=>x.id===eid):null; modal(s?'✏️ Edit':'➕ Add',`<label>Name</label><input type="text" id="sfName" value="${s?.name||''}"><button class="btn btn-success btn-block" onclick="saveSupp(${eid||'null'})">Save</button>`); }
 function saveSupp(eid) { const d={name:document.getElementById('sfName').value.trim()}; eid?(Object.assign(DB.suppliers.getAll().find(x=>x.id===eid),d),DB.suppliers.update(DB.suppliers.getAll().find(x=>x.id===eid))):DB.suppliers.add(d); closeModal();supps(document.getElementById('mainContent'));toast('Saved!','success'); }
 
 // ===== DELIVERY =====
-function deliv(c) { c.innerHTML=`<div class="page-header"><h1>ðŸ›µ Delivery</h1><button class="btn btn-primary btn-sm" onclick="addDelivery()">+ New</button></div>${DB.delivery.getAll().map(d=>`<div class="customer-item"><strong>#${d.id.toString().slice(-6)}</strong> - ${d.status}<button class="btn btn-xs btn-outline" onclick="updateDeliv(${d.id},'${d.status==='pending'?'delivered':'pending'}')">Toggle</button></div>`).join('')}`; }
+function deliv(c) { c.innerHTML=`<div class="page-header"><h1>🛵 Delivery</h1><button class="btn btn-primary btn-sm" onclick="addDelivery()">+ New</button></div>${DB.delivery.getAll().map(d=>`<div class="customer-item"><strong>#${d.id.toString().slice(-6)}</strong> - ${d.status}<button class="btn btn-xs btn-outline" onclick="updateDeliv(${d.id},'${d.status==='pending'?'delivered':'pending'}')">Toggle</button></div>`).join('')}`; }
 function addDelivery() { DB.delivery.add({customerName:'New Delivery',status:'pending'}); deliv(document.getElementById('mainContent'));toast('Added!','success'); }
 function updateDeliv(did,status) { const d=DB.delivery.getAll().find(x=>x.id===did);if(d){d.status=status;DB.delivery.update(d);deliv(document.getElementById('mainContent'));} }
 
 // ===== EMPLOYEES =====
-function emps(c) { c.innerHTML=`<div class="page-header"><h1>ðŸ‘· Employees</h1><button class="btn btn-primary btn-sm" onclick="showEmpForm()">+ Add</button></div>${DB.employees.getAll().map(e=>`<div class="customer-item"><strong>${e.name}</strong> - ${e.role}<button class="btn btn-xs btn-outline" onclick="showEmpForm(${e.id})">âœï¸</button></div>`).join('')}`; }
-function showEmpForm(eid=null) { const e=eid?DB.employees.getAll().find(x=>x.id===eid):null; modal(e?'âœï¸ Edit':'âž• Add',`<label>Name</label><input type="text" id="efName" value="${e?.name||''}"><label>Role</label><select id="efRole"><option>Cashier</option><option>Manager</option></select><button class="btn btn-success btn-block" onclick="saveEmp(${eid||'null'})">Save</button>`); }
+function emps(c) { c.innerHTML=`<div class="page-header"><h1>👷 Employees</h1><button class="btn btn-primary btn-sm" onclick="showEmpForm()">+ Add</button></div>${DB.employees.getAll().map(e=>`<div class="customer-item"><strong>${e.name}</strong> - ${e.role}<button class="btn btn-xs btn-outline" onclick="showEmpForm(${e.id})">✏️</button></div>`).join('')}`; }
+function showEmpForm(eid=null) { const e=eid?DB.employees.getAll().find(x=>x.id===eid):null; modal(e?'✏️ Edit':'➕ Add',`<label>Name</label><input type="text" id="efName" value="${e?.name||''}"><label>Role</label><select id="efRole"><option>Cashier</option><option>Manager</option></select><button class="btn btn-success btn-block" onclick="saveEmp(${eid||'null'})">Save</button>`); }
 function saveEmp(eid) { const d={name:document.getElementById('efName').value.trim(),role:document.getElementById('efRole').value}; eid?(Object.assign(DB.employees.getAll().find(x=>x.id===eid),d),DB.employees.update(DB.employees.getAll().find(x=>x.id===eid))):DB.employees.add(d); closeModal();emps(document.getElementById('mainContent'));toast('Saved!','success'); }
 
 // ===== ENHANCED REPORTS =====
 function reps(c) { 
-    c.innerHTML=`<div class="page-header"><h1>ðŸ“ˆ Reports & Analytics</h1><div>
-        <button class="btn btn-outline btn-sm" onclick="exportReportCSV()">ðŸ“¥ CSV</button>
-        <button class="btn btn-outline btn-sm" style="margin-left:4px" onclick="exportReportPDF()">ðŸ“„ PDF</button>
+    c.innerHTML=`<div class="page-header"><h1>📈 Reports & Analytics</h1><div>
+        <button class="btn btn-outline btn-sm" onclick="exportReportCSV()">📥 CSV</button>
+        <button class="btn btn-outline btn-sm" style="margin-left:4px" onclick="exportReportPDF()">📄 PDF</button>
     </div></div>
     <div class="tabs">
-        <button class="tab-btn active" onclick="loadReport('today',this)">ðŸ“… Today</button>
-        <button class="tab-btn" onclick="loadReport('week',this)">ðŸ“Š This Week</button>
-        <button class="tab-btn" onclick="loadReport('month',this)">ðŸ—“ï¸ This Month</button>
-        <button class="tab-btn" onclick="loadReport('year',this)">ðŸ“† This Year</button>
-        <button class="tab-btn" onclick="loadReport('custom',this)">ðŸ” Custom</button>
+        <button class="tab-btn active" onclick="loadReport('today',this)">📅 Today</button>
+        <button class="tab-btn" onclick="loadReport('week',this)">📊 This Week</button>
+        <button class="tab-btn" onclick="loadReport('month',this)">🗓️ This Month</button>
+        <button class="tab-btn" onclick="loadReport('year',this)">📆 This Year</button>
+        <button class="tab-btn" onclick="loadReport('custom',this)">🔍 Custom</button>
     </div>
     <div id="reportArea"></div>`;
     loadReport('today',document.querySelector('.tab-btn.active'));
@@ -516,7 +516,7 @@ function loadReport(type, btn) {
         case 'lastyear': range=getDateRange('lastyear'); title="Last Year's Report"; groupBy='month'; break;
         case 'custom': 
             area.innerHTML=`
-                <div class="card"><div class="card-title">ðŸ” Custom Date Range</div>
+                <div class="card"><div class="card-title">🔍 Custom Date Range</div>
                 <div class="date-range">
                     <div><label>Start</label><input type="date" id="customStart" value="${new Date(Date.now()-30*86400000).toISOString().slice(0,10)}"></div>
                     <div><label>End</label><input type="date" id="customEnd" value="${new Date().toISOString().slice(0,10)}"></div>
@@ -567,28 +567,28 @@ function loadReport(type, btn) {
         </div>
         
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-icon">ðŸ’°</div><div class="stat-value">${fm(totalSales)}</div><div class="stat-label">Total Sales</div><div class="stat-change ${growth>=0?'up':'down'}">${growth>=0?'â†‘':'â†“'} ${Math.abs(growth).toFixed(1)}% vs prev</div></div>
-            <div class="stat-card"><div class="stat-icon">ðŸ“‹</div><div class="stat-value">${totalOrders}</div><div class="stat-label">Total Orders</div></div>
-            <div class="stat-card"><div class="stat-icon">ðŸ“Š</div><div class="stat-value">${fm(avgOrder)}</div><div class="stat-label">Avg Order Value</div></div>
-            <div class="stat-card"><div class="stat-icon">ðŸ“¦</div><div class="stat-value">${totalItems}</div><div class="stat-label">Items Sold</div></div>
-            <div class="stat-card"><div class="stat-icon">ðŸ·ï¸</div><div class="stat-value">${fm(totalDiscount)}</div><div class="stat-label">Discounts</div></div>
-            <div class="stat-card"><div class="stat-icon">ðŸ§¾</div><div class="stat-value">${fm(totalTax)}</div><div class="stat-label">Tax Collected</div></div>
+            <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${fm(totalSales)}</div><div class="stat-label">Total Sales</div><div class="stat-change ${growth>=0?'up':'down'}">${growth>=0?'↑':'↓'} ${Math.abs(growth).toFixed(1)}% vs prev</div></div>
+            <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-value">${totalOrders}</div><div class="stat-label">Total Orders</div></div>
+            <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">${fm(avgOrder)}</div><div class="stat-label">Avg Order Value</div></div>
+            <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">${totalItems}</div><div class="stat-label">Items Sold</div></div>
+            <div class="stat-card"><div class="stat-icon">🏷️</div><div class="stat-value">${fm(totalDiscount)}</div><div class="stat-label">Discounts</div></div>
+            <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-value">${fm(totalTax)}</div><div class="stat-label">Tax Collected</div></div>
         </div>
         
         <div class="chart-row">
-            <div class="card"><div class="card-title">ðŸ“ˆ Sales Trend</div><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
-            <div class="card"><div class="card-title">ðŸ’³ Payment Methods</div><div class="chart-container"><canvas id="paymentChart"></canvas></div></div>
+            <div class="card"><div class="card-title">📈 Sales Trend</div><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+            <div class="card"><div class="card-title">💳 Payment Methods</div><div class="chart-container"><canvas id="paymentChart"></canvas></div></div>
         </div>
         
         <div class="chart-row">
-            <div class="card"><div class="card-title">â° Hourly Sales</div><div class="chart-container"><canvas id="hourlyChart"></canvas></div></div>
-            <div class="card"><div class="card-title">ðŸ† Top Products</div>
+            <div class="card"><div class="card-title">⏰ Hourly Sales</div><div class="chart-container"><canvas id="hourlyChart"></canvas></div></div>
+            <div class="card"><div class="card-title">🏆 Top Products</div>
                 ${topProducts.map(([n,q],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee"><span>${i+1}. ${n}</span><span class="badge badge-success">${q} sold</span></div>`).join('')||'<p style="color:gray">No sales</p>'}
             </div>
         </div>
         
         <div class="card">
-            <div class="card-title">ðŸ“‹ Transaction List</div>
+            <div class="card-title">📋 Transaction List</div>
             <div style="overflow-x:auto"><table class="report-table">
                 <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th></tr></thead>
                 <tbody>${filteredOrders.slice(0,20).map(o=>`<tr><td><strong>${o.orderNumber}</strong></td><td>${fd(o.timestamp)}</td><td>${o.customerName||'Walk-in'}</td><td>${o.items.length}</td><td><strong>${fm(o.total)}</strong></td><td><span class="badge badge-info">${o.paymentMethod}</span></td></tr>`).join('')}</tbody>
@@ -630,7 +630,7 @@ function loadCustomReport() {
             <div class="stat-card"><div class="stat-value">${fm(orders.length?totalSales/orders.length:0)}</div><div class="stat-label">Avg Order</div></div>
         </div>
         <div class="card"><div class="chart-container"><canvas id="customChart"></canvas></div></div>
-        <button class="btn btn-outline btn-block" onclick="exportCustomCSV('${start.toISOString()}','${end.toISOString()}')">ðŸ“¥ Export CSV</button>`;
+        <button class="btn btn-outline btn-block" onclick="exportCustomCSV('${start.toISOString()}','${end.toISOString()}')">📥 Export CSV</button>`;
     
     setTimeout(()=>{
         const ctx=document.getElementById('customChart');
@@ -712,19 +712,19 @@ function exportCustomCSV(start,end) {
 function pos(c) {
     const cats=getCategories();
     const products=DB.products.getAll().filter(p=>!posCategoryFilter||p.category===posCategoryFilter);
-    c.innerHTML=`<div class="page-header"><h1>ðŸ›’ Point of Sale</h1><button class="btn btn-outline btn-sm" onclick="scanBarcode()">ðŸ“· Scan</button></div>
+    c.innerHTML=`<div class="page-header"><h1>🛒 Point of Sale</h1><button class="btn btn-outline btn-sm" onclick="scanBarcode()">📷 Scan</button></div>
     <div class="pos-grid"><div class="card"><div class="card-title">Products</div>
     <label class="pos-filter-label">Search by Category</label><select id="posCategoryFilter" class="pos-category-select" onchange="setPosCategory(this.value)"><option value="">All Categories</option>${cats.map(cat=>`<option value="${cat.name}" ${posCategoryFilter===cat.name?'selected':''}>${cat.name}</option>`).join('')}</select>
     <div class="product-grid pos-products" style="margin-top:10px">${products.map(p=>`<div class="product-card" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}')"><div class="product-img">${productPhoto(p)}</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div></div>`).join('')||'<p style="color:gray">No products in this category.</p>'}</div></div>
-    <div class="card pos-cart"><div class="card-title">ðŸ›’ Cart</div><div id="cartItems" class="cart-list">${renderCart()}</div>
+    <div class="card pos-cart"><div class="card-title">🛒 Cart</div><div id="cartItems" class="cart-list">${renderCart()}</div>
     <div class="summary-row total"><span>TOTAL:</span><span>${fm(getSubtotal())}</span></div>
-    <button class="btn btn-success btn-block" onclick="processPayment()">ðŸ’³ Complete - ${fm(getSubtotal())}</button></div></div>`;
+    <button class="btn btn-success btn-block" onclick="processPayment()">💳 Complete - ${fm(getSubtotal())}</button></div></div>`;
 }
 function setPosCategory(category) { posCategoryFilter=category; pos(document.getElementById('mainContent')); }
 function prods(c) {
     const ps=DB.products.getAll(), cats=getCategories();
-    c.innerHTML=`<div class="page-header"><h1>ðŸ“¦ Products (${ps.length})</h1><button class="btn btn-primary btn-sm" onclick="showProdForm()">+ Add Product</button></div>
-    <div class="card"><div class="card-title">ðŸ·ï¸ Categories</div><button class="btn btn-primary btn-sm" onclick="showCatForm()">+ Add Category</button><div class="category-grid" style="margin-top:10px">${cats.map(cat=>`<div class="category-card"><div class="category-photo">${categoryPhoto(cat)}</div><strong>${cat.name}</strong><button class="btn btn-danger btn-xs btn-block" style="margin-top:6px" onclick="deleteCategory('${String(cat.id).replace(/'/g,"\\'")}')">Remove</button></div>`).join('')||'<p style="color:gray">No categories yet</p>'}</div></div>
+    c.innerHTML=`<div class="page-header"><h1>📦 Products (${ps.length})</h1><button class="btn btn-primary btn-sm" onclick="showProdForm()">+ Add Product</button></div>
+    <div class="card"><div class="card-title">🏷️ Categories</div><button class="btn btn-primary btn-sm" onclick="showCatForm()">+ Add Category</button><div class="category-grid" style="margin-top:10px">${cats.map(cat=>`<div class="category-card"><div class="category-photo">${categoryPhoto(cat)}</div><strong>${cat.name}</strong><button class="btn btn-danger btn-xs btn-block" style="margin-top:6px" onclick="deleteCategory('${String(cat.id).replace(/'/g,"\\'")}')">Remove</button></div>`).join('')||'<p style="color:gray">No categories yet</p>'}</div></div>
     <div class="product-grid">${ps.map(p=>`<div class="product-card"><div class="product-img">${productPhoto(p)}</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div><div class="product-stock">Category:${p.category||'Other'}<br>Stock:${p.stock||0}</div><button class="btn btn-xs btn-outline btn-block" onclick="showProdForm('${String(p.id).replace(/'/g,"\\'")}')">Edit</button></div>`).join('')}</div>`;
 }
 function showCatForm() {
@@ -752,12 +752,12 @@ function saveProd(eid) {
 }
 
 // ===== SETTINGS =====
-function sett(c) { const s=DB.settings.get(); const cloud=DB.get('mp_cloud_backup'); c.innerHTML=`<div class="page-header"><h1>âš™ï¸ ${tr('settings')}</h1></div>
-<div class="card"><div class="card-title">ðŸ”’ ${tr('account')}</div><p>${tr('user')}: <strong>${currentUser?.name||'Admin'}</strong></p><button class="btn btn-warning btn-block" onclick="showChangePassword()">ðŸ”‘ Change Password</button></div>
-<div class="card"><div class="card-title">ðŸª ${tr('shop')}</div><label>Shop Logo</label><input type="file" id="sLogo" accept="image/*"><label>${tr('nameLabel')}</label><input type="text" id="sName" value="${s.shopName}"><label>Tax No</label><input type="text" id="sTaxNo" value="${s.taxNo||''}"><label>${tr('phone')}</label><input type="text" id="sPhone" value="${s.phone}"><label>Email</label><input type="email" id="sEmail" value="${s.email||''}"><label>Address</label><textarea id="sAddress">${s.address||''}</textarea><label>Receipt Footer</label><input type="text" id="sFooter" value="${s.footerText||'Thanks for purchase ðŸ’•'}"><label>${tr('currency')}</label><select id="sCurr">${Object.entries(CURRENCIES).map(([k,v])=>`<option value="${k}" ${s.currency===k?'selected':''}>${v.symbol} ${v.name}</option>`).join('')}</select><label>${tr('language')}</label><select id="sLang">${Object.entries(LANGUAGES).map(([k,v])=>`<option value="${k}" ${s.language===k?'selected':''}>${v.name}</option>`).join('')}</select></div>
-<div class="card"><div class="card-title">ðŸŽ¨ ${tr('theme')}</div><label><input type="checkbox" id="sDark" ${s.darkMode?'checked':''} onchange="toggleDark()"> ${tr('darkMode')}</label></div>
-<div class="card"><div class="card-title">â˜ï¸ ${tr('backup')}</div><div class="grid-2"><button class="btn btn-primary" onclick="downloadBackup()">ðŸ’¾ ${tr('download')}</button><button class="btn btn-outline" onclick="restoreBackup()">ðŸ“¥ ${tr('restore')}</button><button class="btn btn-success" onclick="googleDriveBackup()">â˜ï¸ ${tr('googleDrive')}</button><button class="btn btn-purple" onclick="cloudBackup()">â˜ï¸ ${tr('cloudBackup')}</button></div><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="restoreCloudBackup()">ðŸ“¥ ${tr('restoreCloud')}</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud slot: ${cloud?.date?new Date(cloud.date).toLocaleString():'No cloud backup yet'}</p></div>
-<button class="btn btn-success btn-block" onclick="saveAllSettings()">ðŸ’¾ ${tr('saveSettings')}</button>`;
+function sett(c) { const s=DB.settings.get(); const cloud=DB.get('mp_cloud_backup'); c.innerHTML=`<div class="page-header"><h1>⚙️ ${tr('settings')}</h1></div>
+<div class="card"><div class="card-title">🔒 ${tr('account')}</div><p>${tr('user')}: <strong>${currentUser?.name||'Admin'}</strong></p><button class="btn btn-warning btn-block" onclick="showChangePassword()">🔑 Change Password</button></div>
+<div class="card"><div class="card-title">🏪 ${tr('shop')}</div><label>Shop Logo</label><input type="file" id="sLogo" accept="image/*"><label>${tr('nameLabel')}</label><input type="text" id="sName" value="${s.shopName}"><label>Tax No</label><input type="text" id="sTaxNo" value="${s.taxNo||''}"><label>${tr('phone')}</label><input type="text" id="sPhone" value="${s.phone}"><label>Email</label><input type="email" id="sEmail" value="${s.email||''}"><label>Address</label><textarea id="sAddress">${s.address||''}</textarea><label>Receipt Footer</label><input type="text" id="sFooter" value="${s.footerText||'Thanks for purchase 💕'}"><label>${tr('currency')}</label><select id="sCurr">${Object.entries(CURRENCIES).map(([k,v])=>`<option value="${k}" ${s.currency===k?'selected':''}>${v.symbol} ${v.name}</option>`).join('')}</select><label>${tr('language')}</label><select id="sLang">${Object.entries(LANGUAGES).map(([k,v])=>`<option value="${k}" ${s.language===k?'selected':''}>${v.name}</option>`).join('')}</select></div>
+<div class="card"><div class="card-title">🎨 ${tr('theme')}</div><label><input type="checkbox" id="sDark" ${s.darkMode?'checked':''} onchange="toggleDark()"> ${tr('darkMode')}</label></div>
+<div class="card"><div class="card-title">☁️ ${tr('backup')}</div><div class="grid-2"><button class="btn btn-primary" onclick="downloadBackup()">💾 ${tr('download')}</button><button class="btn btn-outline" onclick="restoreBackup()">📥 ${tr('restore')}</button><button class="btn btn-success" onclick="googleDriveBackup()">☁️ ${tr('googleDrive')}</button><button class="btn btn-purple" onclick="cloudBackup()">☁️ ${tr('cloudBackup')}</button></div><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="restoreCloudBackup()">📥 ${tr('restoreCloud')}</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud slot: ${cloud?.date?new Date(cloud.date).toLocaleString():'No cloud backup yet'}</p></div>
+<button class="btn btn-success btn-block" onclick="saveAllSettings()">💾 ${tr('saveSettings')}</button>`;
 }
 function saveAllSettings() { const old=DB.settings.get(); const next={...old,shopName:document.getElementById('sName').value,taxNo:document.getElementById('sTaxNo').value,phone:document.getElementById('sPhone').value,email:document.getElementById('sEmail').value,address:document.getElementById('sAddress').value,footerText:document.getElementById('sFooter').value,currency:document.getElementById('sCurr').value,language:document.getElementById('sLang').value,darkMode:document.getElementById('sDark').checked}; const file=document.getElementById('sLogo')?.files?.[0]; if(file){const r=new FileReader();r.onload=e=>{next.logoUrl=e.target.result;DB.settings.save(next);loadSettings();sett(document.getElementById('mainContent'));toast('Saved!','success');};r.readAsDataURL(file);}else{DB.settings.save(next);loadSettings();sett(document.getElementById('mainContent'));toast('Saved!','success');} }
 function toggleDark() { document.body.classList.toggle('dark-mode');const s=DB.settings.get();s.darkMode=!s.darkMode;DB.settings.save(s); }
@@ -771,8 +771,8 @@ function restoreBackup() { const i=document.createElement('input');i.type='file'
 
 // ===== INIT =====
 (function(){const s=DB.settings.get();if(s.logoUrl)setTimeout(()=>{const l=document.getElementById('shopLogoDisplay');if(l)l.innerHTML=`<img src="${s.logoUrl}">`;},100);if(s.darkMode)document.body.classList.add('dark-mode');})();
-console.log('âœ… MyPOS ULTIMATE v4.0 - Enhanced Reports Ready!');
-console.log('ðŸ“Š Reports: Daily | Weekly | Monthly | Yearly | Custom');
+console.log('✅ MyPOS ULTIMATE v4.0 - Enhanced Reports Ready!');
+console.log('📊 Reports: Daily | Weekly | Monthly | Yearly | Custom');
 </script>
     <script>
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
@@ -793,5 +793,3 @@ console.log('ðŸ“Š Reports: Daily | Weekly | Monthly | Yearly | Custom');
     </script>
 </body>
 </html>
-
-
