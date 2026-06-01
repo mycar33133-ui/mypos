@@ -66,7 +66,9 @@
         .nav-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; transition: 0.2s; font-size: 15px; gap: 10px; border-left: 3px solid transparent; }
         .nav-item:hover { background: #f5f5f5; }
         .nav-item.active { background: #E3F2FD; color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
+        .logout-nav { color: var(--red); }
         .nav-item .nav-icon { font-size: 22px; }
+        .logout-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--red); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; }
         .sidebar-footer { padding: 12px 20px; border-top: 1px solid var(--light-gray); font-size: 13px; color: var(--gray); }
         .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 20px; min-height: 100vh; }
 
@@ -259,6 +261,7 @@
             <div class="nav-item" onclick="nav('employees',this)"><span class="nav-icon">👷</span>Employees</div>
             <div class="nav-item" onclick="nav('reports',this)"><span class="nav-icon">📈</span>Reports</div>
             <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
+            <div class="nav-item logout-nav" onclick="doLogout()"><span class="nav-icon logout-icon">⏻</span>Logout</div>
         </div>
         <div class="sidebar-footer">v4.0 Ultimate | <a href="#" onclick="doLogout()" style="color:var(--red)">Logout</a></div>
     </div>
@@ -480,7 +483,7 @@ function seed() {
 function loadSettings() { const s=DB.settings.get(); document.getElementById('sidebarShopName').textContent=s.shopName; if(s.logoUrl) document.getElementById('shopLogoDisplay').innerHTML=`<img src="${s.logoUrl}">`; document.body.classList.toggle('dark-mode',!!s.darkMode); applyLanguage(); }
 function applyLanguage() {
     const labels=['dashboard','pos','products','customers','suppliers','delivery','employees','reports','settings'];
-    document.querySelectorAll('.nav-item').forEach((item,i)=>{const icon=item.querySelector('.nav-icon')?.textContent||'';item.innerHTML=`<span class="nav-icon">${icon}</span>${tr(labels[i])}`;});
+    document.querySelectorAll('.nav-item').forEach((item,i)=>{const icon=item.querySelector('.nav-icon')?.textContent||'';const label=item.classList.contains('logout-nav')?'Logout':tr(labels[i]);item.innerHTML=`<span class="nav-icon">${icon}</span>${label}`;});
 }
 function handleLogo(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>{document.getElementById('shopLogoDisplay').innerHTML=`<img src="${ev.target.result}">`;const s=DB.settings.get();s.logoUrl=ev.target.result;DB.settings.save(s);};r.readAsDataURL(f); }
 
@@ -819,7 +822,7 @@ function saveProd(eid) {
 
 // ===== SETTINGS =====
 function sett(c) { const s=DB.settings.get(); const cloud=DB.get('mp_cloud_backup'); c.innerHTML=`<div class="page-header"><h1>⚙️ ${tr('settings')}</h1></div>
-<div class="card"><div class="card-title">🔒 ${tr('account')}</div><p>${tr('user')}: <strong>${currentUser?.name||'Admin'}</strong></p><button class="btn btn-warning btn-block" onclick="showChangePassword()">🔑 Change Password</button></div>
+<div class="card"><div class="card-title">🔒 ${tr('account')}</div><p>${tr('user')}: <strong>${currentUser?.name||'Admin'}</strong></p><button class="btn btn-warning btn-block" onclick="showChangePassword()">🔑 Change Password</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="doLogout()">⏻ Logout</button></div>
 <div class="card"><div class="card-title">🏪 ${tr('shop')}</div><label>Shop Logo</label><input type="file" id="sLogo" accept="image/*"><label>${tr('nameLabel')}</label><input type="text" id="sName" value="${s.shopName}"><label>Tax No</label><input type="text" id="sTaxNo" value="${s.taxNo||''}"><label>${tr('phone')}</label><input type="text" id="sPhone" value="${s.phone}"><label>Email</label><input type="email" id="sEmail" value="${s.email||''}"><label>Address</label><textarea id="sAddress">${s.address||''}</textarea><label>Receipt Footer</label><input type="text" id="sFooter" value="${s.footerText||'Thanks for purchase 💕'}"><label>${tr('currency')}</label><select id="sCurr">${Object.entries(CURRENCIES).map(([k,v])=>`<option value="${k}" ${s.currency===k?'selected':''}>${v.symbol} ${v.name}</option>`).join('')}</select><label>${tr('language')}</label><select id="sLang">${Object.entries(LANGUAGES).map(([k,v])=>`<option value="${k}" ${s.language===k?'selected':''}>${v.name}</option>`).join('')}</select></div>
 <div class="card"><div class="card-title">🎨 ${tr('theme')}</div><label><input type="checkbox" id="sDark" ${s.darkMode?'checked':''} onchange="toggleDark()"> ${tr('darkMode')}</label></div>
 <div class="card"><div class="card-title">☁️ ${tr('backup')}</div><div class="grid-2"><button class="btn btn-primary" onclick="downloadBackup()">💾 ${tr('download')}</button><button class="btn btn-outline" onclick="restoreBackup()">📥 ${tr('restore')}</button><button class="btn btn-success" onclick="googleDriveBackup()">☁️ ${tr('googleDrive')}</button><button class="btn btn-purple" onclick="cloudBackup()">☁️ ${tr('cloudBackup')}</button></div><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="restoreCloudBackup()">📥 ${tr('restoreCloud')}</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud slot: ${cloud?.date?new Date(cloud.date).toLocaleString():'No cloud backup yet'}</p></div>
