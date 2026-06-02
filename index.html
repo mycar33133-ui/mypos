@@ -202,7 +202,7 @@
 
         @media print { body * { visibility: hidden; } .receipt-print, .receipt-print * { visibility: visible; } .receipt-print { position: absolute; left: 0; top: 0; width: 80mm; padding: 10px; font-size: 12px; } }
         @media (max-width: 768px) {
-            .sidebar { width: 100%; height: auto; min-height: 0; position: sticky; top: 0; flex-direction: row; overflow-x: auto; z-index: 90; border-top: 26px solid var(--primary); padding-top: 6px; }
+            .sidebar { width: 100%; height: auto; min-height: 0; position: sticky; top: 0; flex-direction: row; overflow-x: auto; z-index: 90; border-top: 34px solid var(--primary); padding-top: 6px; }
             .sidebar-header, .sidebar-footer { display: none; }
             .sidebar-nav { display: flex; flex-direction: row; padding: 0; flex: 0 0 auto; width: max-content; min-height: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .nav-item { flex: 0 0 auto; min-width: 92px; min-height: 72px; flex-direction: column; justify-content: center; padding: 10px 8px; font-size: 12px; gap: 4px; border-left: none; border-bottom: 3px solid transparent; touch-action: manipulation; }
@@ -252,7 +252,7 @@
         <button class="login-btn" onclick="doLogin()">🔐 Sign In</button>
         <p class="login-error" id="loginError">Invalid credentials!</p>
         <a class="login-link" onclick="showSignUp()">Create Account</a>
-        <a class="login-link" onclick="showGmailSignUp()" style="display:block;margin-top:8px">Sign up with Gmail</a>
+        <a class="login-link" id="gmailSignUpLink" onclick="showGmailSignUp()" style="display:block;margin-top:8px">Sign up with Gmail</a>
         <a class="login-link" onclick="showForgotPassword()" style="display:block;margin-top:8px">Forgot Password?</a>
     </div>
 </div>
@@ -448,6 +448,12 @@ function tr(k) { const s=DB.settings.get(); return (LANGUAGES[s.language]&&LANGU
 function fd(iso) { return new Date(iso).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function fds(iso) { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
 function toast(m,t='info') { const el=document.createElement('div'); el.className='toast '+t; el.textContent=m; document.getElementById('toastContainer').appendChild(el); setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},3000); }
+function isApkMode() { return new URLSearchParams(location.search).has('apk') || /; wv\)/i.test(navigator.userAgent); }
+function applyApkLoginMode() {
+    if(!isApkMode()) return;
+    const gmail=document.getElementById('gmailSignUpLink');
+    if(gmail) gmail.style.display='none';
+}
 function modal(title,content) { document.getElementById('globalModalContent').innerHTML=`<button class="modal-close" onclick="closeModal()">✕</button><h2 style="margin-bottom:16px">${title}</h2>${content}`; document.getElementById('globalModal').classList.add('active'); }
 function closeModal() { document.getElementById('globalModal').classList.remove('active'); }
 function ac(n) { const c=['#F44336','#E91E63','#9C27B0','#673AB7','#3F51B5','#2196F3','#009688','#4CAF50','#FF9800','#795548']; return c[Math.abs(n.split('').reduce((a,b)=>a+b.charCodeAt(0),0))%c.length]; }
@@ -588,6 +594,11 @@ function showGmailSignUp() {
     startGmailSignUp();
 }
 async function startGmailSignUp() {
+    if(isApkMode()){
+        toast('For APK, use Create Account with email/password. Gmail sign-in is blocked by Google in WebView.','info');
+        showSignUp();
+        return;
+    }
     if(!initFirebase()){toast('Firebase not loaded yet. Check internet.','error');return;}
     try{
         const provider=new firebase.auth.GoogleAuthProvider();
@@ -623,6 +634,7 @@ async function createAccount() {
             currentFirebaseUser=cred.user;
             startCloudListener(cred.user);
             await firebaseDb.collection('users').doc(cred.user.uid).set({username,name,email,birthday:dob,role:'admin',createdAt:new Date().toISOString()},{merge:true});
+            if(!DB.users.getAll().some(u=>(u.email||'').toLowerCase()===email)) DB.users.add({username,password,name,email,birthday:dob,role:'admin',createdAt:new Date().toISOString(),signupMethod:'firebase'});
             await saveCloudData();
             document.getElementById('loginUsername').value=email;
             document.getElementById('loginPassword').value=password;
@@ -638,14 +650,23 @@ async function createAccount() {
     toast('Account created. You can sign in now!','success');
 }
 function showForgotPassword() {
-    modal('🔑 Reset Password',`<label>Email</label><input type="email" id="resetUser" placeholder="your@email.com"><label>Date of Birth</label><input type="date" id="resetDob"><label>New Password</label><input type="password" id="resetNewPass" placeholder="New password"><label>Confirm Password</label><input type="password" id="resetNewPass2" placeholder="Confirm password"><button class="btn btn-primary btn-block" style="margin-top:12px" onclick="resetPassword()">Reset Password</button><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="sendFirebaseReset()">Email Reset Link</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud users can use Email Reset Link. Local users can use birthday verification.</p>`);
+    modal('🔑 Reset Password',`<label>Email</label><input type="email" id="resetUser" placeholder="your@email.com"><button class="btn btn-primary btn-block" style="margin-top:12px" onclick="sendFirebaseReset()">Email Reset Link</button><div style="margin:14px 0 8px;font-weight:700;color:var(--gray)">Local birthday reset</div><label>Date of Birth</label><input type="date" id="resetDob"><label>New Password</label><input type="password" id="resetNewPass" placeholder="New password"><label>Confirm Password</label><input type="password" id="resetNewPass2" placeholder="Confirm password"><button class="btn btn-outline btn-block" style="margin-top:12px" onclick="resetPassword()">Reset Local Password</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud users: use Email Reset Link and check Spam/Promotions folder. Local users: use birthday verification.</p>`);
 }
 async function sendFirebaseReset() {
     const email=document.getElementById('resetUser')?.value.trim().toLowerCase();
     if(!email||!email.includes('@')){toast('Enter your email!','error');return;}
     if(!initFirebase()){toast('Firebase not loaded yet.','error');return;}
-    try{await firebaseAuth.sendPasswordResetEmail(email);closeModal();toast('Reset email sent!','success');}
-    catch(e){toast(e.message||'Could not send reset email','error');}
+    try{
+        await firebaseAuth.sendPasswordResetEmail(email,{url:'https://mycar33133-ui.github.io/mypos/?v=resetdone',handleCodeInApp:false});
+        closeModal();
+        toast('Reset email sent. Check Inbox and Spam.','success');
+    }
+    catch(e){
+        const code=e?.code||'';
+        if(code.includes('user-not-found')) toast('No cloud account found for this email.','error');
+        else if(code.includes('invalid-email')) toast('Email address is not valid.','error');
+        else toast(e.message||'Could not send reset email','error');
+    }
 }
 function resetPassword() {
     const u=document.getElementById('resetUser')?.value.trim();
@@ -656,7 +677,9 @@ function resetPassword() {
     if(np!==cp){toast('Passwords do not match!','error');return;}
     if(np.length<3){toast('Min 3 characters!','error');return;}
     const user=DB.users.getAll().find(x=>x.username===u||(x.email||'').toLowerCase()===u.toLowerCase());
-    if(!user){toast('User not found!','error');return;}
+    if(!user&&u.includes('@')){sendFirebaseReset();return;}
+    if(!user){toast('Local user not found. Use Email Reset Link for cloud account.','error');return;}
+    if(user.signupMethod==='firebase'){sendFirebaseReset();return;}
     if(user.birthday!==dob){toast('Birthday verification failed!','error');return;}
     DB.users.updateUser(user.username,{password:np});
     closeModal();
@@ -1069,7 +1092,7 @@ function restoreBackupData(d) { if(d.products)DB.products.save(d.products);if(d.
 function restoreBackup() { const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(confirm('Restore?'))restoreBackupData(d);}catch(ex){toast('Invalid file!','error');}};r.readAsText(f);};i.click(); }
 
 // ===== INIT =====
-(function(){const s=DB.settings.get();if(s.logoUrl)setTimeout(()=>{const l=document.getElementById('shopLogoDisplay');if(l)l.innerHTML=`<img src="${s.logoUrl}">`;},100);if(s.darkMode)document.body.classList.add('dark-mode');restoreLogin();})();
+(function(){const s=DB.settings.get();applyApkLoginMode();if(s.logoUrl)setTimeout(()=>{const l=document.getElementById('shopLogoDisplay');if(l)l.innerHTML=`<img src="${s.logoUrl}">`;},100);if(s.darkMode)document.body.classList.add('dark-mode');restoreLogin();})();
 console.log('✅ MyPOS ULTIMATE v4.0 - Enhanced Reports Ready!');
 console.log('📊 Reports: Daily | Weekly | Monthly | Yearly | Custom');
 </script>
