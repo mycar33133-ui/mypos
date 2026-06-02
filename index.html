@@ -121,6 +121,7 @@
         .product-name { font-weight: 600; font-size: 15px; margin: 7px 0 3px; }
         .product-price { color: var(--primary); font-weight: bold; font-size: 17px; }
         .product-stock { font-size: 13px; color: var(--gray); }
+        .product-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
         .stock-low { color: var(--red); font-weight: 600; }
         .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
         .category-card { background: white; border: 1px solid var(--light-gray); border-radius: 12px; padding: 10px; text-align: center; }
@@ -1013,7 +1014,7 @@ function prods(c) {
     const ps=DB.products.getAll(), cats=getCategories();
     c.innerHTML=`<div class="page-header"><h1>📦 Products (${ps.length})</h1><button class="btn btn-primary btn-sm" onclick="showProdForm()">+ Add Product</button></div>
     <div class="card"><div class="card-title">🏷️ Categories</div><button class="btn btn-primary btn-sm" onclick="showCatForm()">+ Add Category</button><div class="category-grid" style="margin-top:10px">${cats.map(cat=>`<div class="category-card"><div class="category-photo">${categoryPhoto(cat)}</div><strong>${cat.name}</strong><button class="btn btn-danger btn-xs btn-block" style="margin-top:6px" onclick="deleteCategory('${String(cat.id).replace(/'/g,"\\'")}')">Remove</button></div>`).join('')||'<p style="color:gray">No categories yet</p>'}</div></div>
-    <div class="product-grid">${ps.map(p=>`<div class="product-card"><div class="product-img">${productPhoto(p)}</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div><div class="product-stock">Category:${p.category||'Other'}<br>Stock:${p.stock||0}</div><button class="btn btn-xs btn-outline btn-block" onclick="showProdForm('${String(p.id).replace(/'/g,"\\'")}')">Edit</button></div>`).join('')}</div>`;
+    <div class="product-grid">${ps.map(p=>{const id=JSON.stringify(String(p.id));return `<div class="product-card"><div class="product-img">${productPhoto(p)}</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div><div class="product-stock">Category:${p.category||'Other'}<br>Stock:${p.stock||0}</div><div class="product-actions"><button class="btn btn-xs btn-outline" onclick="showProdForm(${id})">Edit</button><button class="btn btn-xs btn-danger" onclick="deleteProduct(${id})">Remove</button></div></div>`}).join('')||'<p style="color:gray">No products yet</p>'}</div>`;
 }
 function showCatForm() {
     modal('Add Category',`<label>Category Name</label><input type="text" id="catName"><label>Category Photo</label><input type="file" id="catPhoto" accept="image/*"><p style="font-size:12px;color:var(--gray);margin:4px 0 8px">Choose Gallery/File, or Camera if your phone offers it.</p><div id="uploadStatus"></div><button class="btn btn-success btn-block" onclick="saveCategory()">Save Category</button>`);
@@ -1032,11 +1033,21 @@ function deleteCategory(id) {
     toast('Category removed!','success');
 }
 function showProdForm(eid=null) {
-    const p=eid?DB.products.getAll().find(x=>x.id===eid):null, cats=getCategories();
-    modal(p?'Edit Product':'Add Product',`<label>Name</label><input type="text" id="pfName" value="${p?.name||''}"><label>Price</label><input type="number" id="pfPrice" value="${p?.price||''}" step="0.01"><label>Stock</label><input type="number" id="pfStock" value="${p?.stock||0}"><label>Category</label><select id="pfCategory"><option value="">Other</option>${cats.map(c=>`<option value="${c.name}" ${p?.category===c.name?'selected':''}>${c.name}</option>`).join('')}</select><label>Product Photo</label><input type="file" id="pfImage" accept="image/*"><p style="font-size:12px;color:var(--gray);margin:4px 0 8px">Choose Gallery/File, or Camera if your phone offers it.</p>${p?.imageUrl?'<p style="font-size:11px;color:var(--gray)">Leave empty to keep current photo.</p>':''}<div id="uploadStatus"></div><button class="btn btn-success btn-block" onclick="saveProd(${eid||'null'})">Save</button>`);
+    const p=eid?DB.products.getAll().find(x=>String(x.id)===String(eid)):null, cats=getCategories();
+    const eidArg=eid===null?'null':JSON.stringify(String(eid));
+    modal(p?'Edit Product':'Add Product',`<label>Name</label><input type="text" id="pfName" value="${p?.name||''}"><label>Price</label><input type="number" id="pfPrice" value="${p?.price||''}" step="0.01"><label>Stock</label><input type="number" id="pfStock" value="${p?.stock||0}"><label>Category</label><select id="pfCategory"><option value="">Other</option>${cats.map(c=>`<option value="${c.name}" ${p?.category===c.name?'selected':''}>${c.name}</option>`).join('')}</select><label>Product Photo</label><input type="file" id="pfImage" accept="image/*"><p style="font-size:12px;color:var(--gray);margin:4px 0 8px">Choose Gallery/File, or Camera if your phone offers it.</p>${p?.imageUrl?'<p style="font-size:11px;color:var(--gray)">Leave empty to keep current photo.</p>':''}<div id="uploadStatus"></div><button class="btn btn-success btn-block" onclick="saveProd(${eidArg})">Save</button>${p?`<button class="btn btn-danger btn-block" style="margin-top:8px" onclick="deleteProduct(${eidArg})">Remove Product</button>`:''}`);
 }
 function saveProd(eid) {
     readImageInput('pfImage',img=>{const old=eid?DB.products.getAll().find(x=>String(x.id)===String(eid)):null; const d={id:old?.id||newId('prod'),name:document.getElementById('pfName').value.trim(),price:parseFloat(document.getElementById('pfPrice').value)||0,stock:parseInt(document.getElementById('pfStock').value)||0,category:document.getElementById('pfCategory').value,imageUrl:img||old?.imageUrl||''}; if(old){Object.assign(old,d);DB.products.update(old);}else{const products=DB.products.getAll();products.push(d);DB.products.save(products);} closeModal(); prods(document.getElementById('mainContent')); toast('Saved!','success');});
+}
+function deleteProduct(id) {
+    const product=DB.products.getAll().find(p=>String(p.id)===String(id));
+    if(!product||!confirm(`Remove product "${product.name}"?`)) return;
+    DB.products.save(DB.products.getAll().filter(p=>String(p.id)!==String(id)));
+    cart=cart.filter(i=>String(i.product.id)!==String(id));
+    closeModal();
+    prods(document.getElementById('mainContent'));
+    toast('Product removed!','success');
 }
 
 // ===== SETTINGS =====
