@@ -457,20 +457,62 @@ function setUploadLoading(message='Uploading photo...') {
     const el=document.getElementById('uploadStatus');
     if(el) el.innerHTML=`<div style="padding:10px;margin-top:8px;border-radius:10px;background:#E3F2FD;color:#1565C0;font-weight:600;text-align:center">${message}</div>`;
 }
+function resizeImageFile(file,maxSize=900,quality=0.72) {
+    if(!file||!file.type?.startsWith('image/')) return Promise.resolve(file);
+    return new Promise((resolve,reject)=>{
+        const img=new Image(), url=URL.createObjectURL(file);
+        img.onload=()=>{
+            URL.revokeObjectURL(url);
+            let w=img.width,h=img.height;
+            if(w>maxSize||h>maxSize){const r=Math.min(maxSize/w,maxSize/h);w=Math.round(w*r);h=Math.round(h*r);}
+            const canvas=document.createElement('canvas');
+            canvas.width=w;canvas.height=h;
+            canvas.getContext('2d').drawImage(img,0,0,w,h);
+            canvas.toBlob(blob=>{
+                if(!blob){resolve(file);return;}
+                const name=(file.name||'photo').replace(/\.[^.]+$/,'')+'.jpg';
+                try{resolve(new File([blob],name,{type:'image/jpeg'}));}
+                catch(e){blob.name=name;resolve(blob);}
+            },'image/jpeg',quality);
+        };
+        img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Image load failed'));};
+        img.src=url;
+    });
+}
 function readImageInput(id,cb) {
     const f=document.getElementById(id)?.files?.[0];
     if(!f)return cb('');
     const folder=id==='sLogo'?'shop-logo':(id==='catPhoto'?'categories':'products');
-    if(initFirebase()&&currentFirebaseUser&&firebaseStorage){
+    const readLocal=(fileToRead=f)=>{const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(fileToRead);};
+    const startUpload=(fileToUpload=f)=>{
+        if(initFirebase()&&currentFirebaseUser&&firebaseStorage){
         setUploadLoading('Uploading photo to cloud...');
-        uploadCloudFile(f,folder).then(url=>cb(url)).catch(()=>{
+        let done=false;
+        const fallbackTimer=setTimeout(()=>{
+            if(done) return;
+            done=true;
+            setUploadLoading('Cloud upload slow. Saving now...');
+            readLocal(fileToUpload);
+        },10000);
+        uploadCloudFile(fileToUpload,folder).then(url=>{
+            if(done) return;
+            done=true;
+            clearTimeout(fallbackTimer);
+            cb(url);
+        }).catch(()=>{
+            if(done) return;
+            done=true;
+            clearTimeout(fallbackTimer);
             setUploadLoading('Cloud upload failed. Saving photo locally...');
-            const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f);
+            readLocal(fileToUpload);
         });
         return;
-    }
-    setUploadLoading('Loading photo...');
-    const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f);
+        }
+        setUploadLoading('Loading photo...');
+        readLocal(fileToUpload);
+    };
+    setUploadLoading('Preparing photo...');
+    resizeImageFile(f).then(startUpload).catch(()=>startUpload(f));
 }
 function productPhoto(p) { return p?.imageUrl?`<img src="${p.imageUrl}">`:'📦'; }
 function categoryPhoto(c) { return c?.imageUrl?`<img src="${c.imageUrl}">`:'🏷️'; }
