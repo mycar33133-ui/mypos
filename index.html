@@ -20,6 +20,9 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --primary: #1565C0; --primary-dark: #0D47A1; --accent: #FF6F00;
@@ -197,12 +200,13 @@
 
         @media print { body * { visibility: hidden; } .receipt-print, .receipt-print * { visibility: visible; } .receipt-print { position: absolute; left: 0; top: 0; width: 80mm; padding: 10px; font-size: 12px; } }
         @media (max-width: 768px) {
-            .sidebar { width: 100%; height: auto; min-height: 0; position: relative; flex-direction: row; overflow-x: auto; }
+            .sidebar { width: 100%; height: auto; min-height: 0; position: sticky; top: 0; flex-direction: row; overflow-x: auto; z-index: 90; border-top: 26px solid var(--primary); padding-top: 6px; }
             .sidebar-header, .sidebar-footer { display: none; }
-            .sidebar-nav { display: flex; flex-direction: row; padding: 0; flex: 0 0 auto; width: max-content; min-height: 0; }
-            .nav-item { flex-direction: column; padding: 9px 7px; font-size: 11px; gap: 3px; border-left: none; border-bottom: 2px solid transparent; }
+            .sidebar-nav { display: flex; flex-direction: row; padding: 0; flex: 0 0 auto; width: max-content; min-height: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .nav-item { flex: 0 0 auto; min-width: 92px; min-height: 72px; flex-direction: column; justify-content: center; padding: 10px 8px; font-size: 12px; gap: 4px; border-left: none; border-bottom: 3px solid transparent; touch-action: manipulation; }
             .nav-item.active { border-left: none; border-bottom-color: var(--primary); }
-            .nav-icon { font-size: 23px; }
+            .nav-icon { font-size: 26px; pointer-events: none; }
+            .logout-icon { width: 30px; height: 30px; font-size: 18px; }
             .main-content { margin-left: 0; padding: 10px; }
             .app-container { flex-direction: column; }
             .chart-row { grid-template-columns: 1fr; }
@@ -241,7 +245,7 @@
         <h2>MyPOS Ultimate</h2>
         <p class="subtitle" style="color:var(--gray);margin-bottom:24px">All-in-One Business System</p>
         <p class="first-time-note" style="color:var(--gray);margin:-12px 0 14px">First time? Create an account before login.</p>
-        <input type="text" id="loginUsername" placeholder="Username">
+        <input type="email" id="loginUsername" placeholder="Email">
         <input type="password" id="loginPassword" placeholder="Password">
         <button class="login-btn" onclick="doLogin()">🔐 Sign In</button>
         <p class="login-error" id="loginError">Invalid credentials!</p>
@@ -259,15 +263,15 @@
             <h3 id="sidebarShopName" style="font-size:14px">My Shop</h3>
         </div>
         <div class="sidebar-nav">
-            <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
-            <div class="nav-item" onclick="nav('pos',this)"><span class="nav-icon">🛒</span>POS</div>
-            <div class="nav-item" onclick="nav('products',this)"><span class="nav-icon">📦</span>Products</div>
-            <div class="nav-item" onclick="nav('customers',this)"><span class="nav-icon">👥</span>Customers</div>
-            <div class="nav-item" onclick="nav('suppliers',this)"><span class="nav-icon">🏭</span>Suppliers</div>
-            <div class="nav-item" onclick="nav('delivery',this)"><span class="nav-icon">🛵</span>Delivery</div>
-            <div class="nav-item" onclick="nav('employees',this)"><span class="nav-icon">👷</span>Employees</div>
-            <div class="nav-item" onclick="nav('reports',this)"><span class="nav-icon">📈</span>Reports</div>
-            <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
+            <div class="nav-item active" data-page="dashboard" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
+            <div class="nav-item" data-page="pos" onclick="nav('pos',this)"><span class="nav-icon">🛒</span>POS</div>
+            <div class="nav-item" data-page="products" onclick="nav('products',this)"><span class="nav-icon">📦</span>Products</div>
+            <div class="nav-item" data-page="customers" onclick="nav('customers',this)"><span class="nav-icon">👥</span>Customers</div>
+            <div class="nav-item" data-page="suppliers" onclick="nav('suppliers',this)"><span class="nav-icon">🏭</span>Suppliers</div>
+            <div class="nav-item" data-page="delivery" onclick="nav('delivery',this)"><span class="nav-icon">🛵</span>Delivery</div>
+            <div class="nav-item" data-page="employees" onclick="nav('employees',this)"><span class="nav-icon">👷</span>Employees</div>
+            <div class="nav-item" data-page="reports" onclick="nav('reports',this)"><span class="nav-icon">📈</span>Reports</div>
+            <div class="nav-item" data-page="settings" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
             <div class="nav-item logout-nav" onclick="doLogout()"><span class="nav-icon logout-icon">⏻</span>Logout</div>
         </div>
         <div class="sidebar-footer">v4.0 Ultimate | <a href="#" onclick="doLogout()" style="color:var(--red)">Logout</a></div>
@@ -282,7 +286,7 @@
 // ===== COMPLETE DATABASE =====
 const DB = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
-    set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
+    set(k, v) { localStorage.setItem(k, JSON.stringify(v)); scheduleCloudSync(k); },
     users: {
         getAll() {
             const users=DB.get('mp_users') || [];
@@ -338,6 +342,69 @@ const DB = {
 // ===== GLOBAL STATE =====
 let currentUser=null, currentPage='dashboard', cart=[], heldOrders=[];
 let posCategoryFilter='';
+let firebaseApp=null, firebaseAuth=null, firebaseDb=null, currentFirebaseUser=null, cloudSyncTimer=null, cloudLoading=false;
+const firebaseConfig = {
+    apiKey: "AIzaSyDLcvigj3ZlJ-GHP1Drb3-BWlIxZS9Rqmw",
+    authDomain: "mypos-dewi.firebaseapp.com",
+    projectId: "mypos-dewi",
+    storageBucket: "mypos-dewi.firebasestorage.app",
+    messagingSenderId: "856817367032",
+    appId: "1:856817367032:web:a494d5546833fa4dfbc80d",
+    measurementId: "G-G0XGJXCK4Z"
+};
+function initFirebase() {
+    if(firebaseApp || typeof firebase==='undefined') return !!firebaseApp;
+    firebaseApp=firebase.initializeApp(firebaseConfig);
+    firebaseAuth=firebase.auth();
+    firebaseDb=firebase.firestore();
+    firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+    firebaseAuth.onAuthStateChanged(async user=>{
+        currentFirebaseUser=user||null;
+        if(user && !currentUser){
+            await loadCloudData(user);
+            currentUser={username:user.email||user.uid,password:'',name:user.displayName||user.email||'User',email:user.email||'',birthday:'',role:'admin',firebaseUid:user.uid};
+            DB.set('mp_current_user',currentUser.username);
+            document.getElementById('loginScreen').style.display='none';
+            document.getElementById('appContainer').classList.add('active');
+            initApp();
+        }
+    });
+    return true;
+}
+function makeCloudData() {
+    return {products:DB.products.getAll(),categories:DB.categories.getAll(),customers:DB.customers.getAll(),suppliers:DB.suppliers.getAll(),orders:DB.orders.getAll(),employees:DB.employees.getAll(),delivery:DB.delivery.getAll(),settings:DB.settings.get(),updatedAt:new Date().toISOString()};
+}
+function scheduleCloudSync(key='') {
+    if(cloudLoading||!currentFirebaseUser||!firebaseDb||key==='mp_current_user'||key==='mp_cloud_backup') return;
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer=setTimeout(saveCloudData,900);
+}
+async function saveCloudData() {
+    if(!currentFirebaseUser||!firebaseDb) return;
+    try{
+        await firebaseDb.collection('users').doc(currentFirebaseUser.uid).set({email:currentFirebaseUser.email||'',name:currentUser?.name||currentFirebaseUser.displayName||'',lastSeen:new Date().toISOString()},{merge:true});
+        await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('mypos').doc('data').set(makeCloudData(),{merge:true});
+    }catch(e){console.warn('Cloud sync failed',e);}
+}
+async function loadCloudData(user) {
+    if(!firebaseDb||!user) return;
+    try{
+        cloudLoading=true;
+        const snap=await firebaseDb.collection('users').doc(user.uid).collection('mypos').doc('data').get();
+        const d=snap.exists?snap.data():null;
+        if(d){
+            if(d.products)DB.products.save(d.products);
+            if(d.categories)DB.categories.save(d.categories);
+            if(d.customers)DB.customers.save(d.customers);
+            if(d.suppliers)DB.suppliers.save(d.suppliers);
+            if(d.orders)DB.orders.save(d.orders);
+            if(d.employees)DB.employees.save(d.employees);
+            if(d.delivery)DB.delivery.save(d.delivery);
+            if(d.settings)DB.settings.save(d.settings);
+        }
+    }catch(e){console.warn('Cloud load failed',e);}
+    finally{cloudLoading=false;}
+}
 const CURRENCIES={USD:{symbol:'$',name:'USD'},EUR:{symbol:'�',name:'EUR'},GBP:{symbol:'�',name:'GBP'},INR:{symbol:'₹',name:'INR'},IDR:{symbol:'Rp',name:'IDR'},JPY:{symbol:'�',name:'JPY'},AUD:{symbol:'A$',name:'AUD'},CAD:{symbol:'C$',name:'CAD'}};
 const CHART_COLORS=['#1565C0','#4CAF50','#FF9800','#F44336','#9C27B0','#00BCD4','#FF5722','#795548','#607D8B','#E91E63','#3F51B5','#CDDC39'];
 const LANGUAGES={
@@ -389,15 +456,31 @@ function getDateRange(type) {
 }
 
 // ===== AUTH =====
-function doLogin() {
+async function doLogin() {
     const u=document.getElementById('loginUsername').value.trim(), p=document.getElementById('loginPassword').value.trim();
+    if(!u||!p){toast('Enter email and password!','error');return;}
+    if(initFirebase() && u.includes('@')){
+        try{
+            const cred=await firebaseAuth.signInWithEmailAndPassword(u,p);
+            await loadCloudData(cred.user);
+            currentUser={username:cred.user.email,password:'',name:cred.user.displayName||cred.user.email,email:cred.user.email,birthday:'',role:'admin',firebaseUid:cred.user.uid};
+            DB.set('mp_current_user',currentUser.username);
+            document.getElementById('loginScreen').style.display='none';
+            document.getElementById('appContainer').classList.add('active');
+            initApp();
+            toast('Cloud login success!','success');
+            return;
+        }catch(e){toast(e.message||'Firebase login failed','error');return;}
+    }
     if(DB.users.getAll().length===0){showSignUp();toast('Please sign up first.','info');return;}
     const user=DB.users.validate(u,p);
     if(user){currentUser=user;DB.set('mp_current_user',user.username);document.getElementById('loginScreen').style.display='none';document.getElementById('appContainer').classList.add('active');initApp();toast('Welcome!','success');}
     else{document.getElementById('loginError').style.display='block';}
 }
-function doLogout() { if(confirm('Logout?')){currentUser=null;cart=[];localStorage.removeItem('mp_current_user');document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
+function doLogout() { if(confirm('Logout?')){if(firebaseAuth)firebaseAuth.signOut().catch(()=>{});currentUser=null;currentFirebaseUser=null;cart=[];localStorage.removeItem('mp_current_user');document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
 function restoreLogin() {
+    initFirebase();
+    if(currentFirebaseUser) return true;
     const username=DB.get('mp_current_user');
     if(!username) return false;
     const user=DB.users.getAll().find(u=>u.username===username);
@@ -412,16 +495,25 @@ function showSignUp(prefillEmail='') {
     modal('Create Account',`<label>Full Name</label><input type="text" id="suName" placeholder="Your name"><label>Username</label><input type="text" id="suUser" placeholder="Username"><label>Email / Gmail</label><input type="email" id="suEmail" placeholder="name@gmail.com" value="${prefillEmail}"><label>Date of Birth</label><input type="date" id="suDob"><label>Password</label><input type="password" id="suPass" placeholder="Password"><label>Confirm Password</label><input type="password" id="suPass2" placeholder="Confirm password"><button class="btn btn-success btn-block" style="margin-top:12px" onclick="createAccount()">Create Account</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Save your birthday. It is needed for password reset.</p>`);
 }
 function showGmailSignUp() {
-    modal('Sign up with Gmail',`<label>Gmail Address</label><input type="email" id="gmailSignupEmail" placeholder="name@gmail.com"><button class="btn btn-primary btn-block" style="margin-top:12px" onclick="startGmailSignUp()">Continue</button><p style="font-size:11px;color:var(--gray);margin-top:8px">This creates a local MyPOS account using your Gmail address.</p>`);
+    startGmailSignUp();
 }
-function startGmailSignUp() {
-    const email=document.getElementById('gmailSignupEmail')?.value.trim().toLowerCase();
-    if(!email||!email.endsWith('@gmail.com')){toast('Enter a valid Gmail address!','error');return;}
-    showSignUp(email);
-    const user=email.split('@')[0].replace(/[^a-z0-9._-]/gi,'');
-    setTimeout(()=>{document.getElementById('suUser').value=user;document.getElementById('suEmail').value=email;},50);
+async function startGmailSignUp() {
+    if(!initFirebase()){toast('Firebase not loaded yet. Check internet.','error');return;}
+    try{
+        const provider=new firebase.auth.GoogleAuthProvider();
+        const result=await firebaseAuth.signInWithPopup(provider);
+        await loadCloudData(result.user);
+        currentUser={username:result.user.email,password:'',name:result.user.displayName||result.user.email,email:result.user.email,birthday:'',role:'admin',firebaseUid:result.user.uid};
+        DB.set('mp_current_user',currentUser.username);
+        closeModal();
+        document.getElementById('loginScreen').style.display='none';
+        document.getElementById('appContainer').classList.add('active');
+        initApp();
+        await saveCloudData();
+        toast('Gmail login success!','success');
+    }catch(e){toast(e.message||'Gmail sign in failed','error');}
 }
-function createAccount() {
+async function createAccount() {
     const name=document.getElementById('suName')?.value.trim();
     const username=document.getElementById('suUser')?.value.trim();
     const email=document.getElementById('suEmail')?.value.trim().toLowerCase();
@@ -433,14 +525,35 @@ function createAccount() {
     if(password.length<3){toast('Min 3 characters!','error');return;}
     if(DB.users.getAll().some(u=>u.username.toLowerCase()===username.toLowerCase())){toast('Username already exists!','error');return;}
     if(DB.users.getAll().some(u=>(u.email||'').toLowerCase()===email)){toast('Email already exists!','error');return;}
+    if(initFirebase()){
+        try{
+            const cred=await firebaseAuth.createUserWithEmailAndPassword(email,password);
+            await cred.user.updateProfile({displayName:name}).catch(()=>{});
+            currentFirebaseUser=cred.user;
+            await firebaseDb.collection('users').doc(cred.user.uid).set({username,name,email,birthday:dob,role:'admin',createdAt:new Date().toISOString()},{merge:true});
+            await saveCloudData();
+            document.getElementById('loginUsername').value=email;
+            document.getElementById('loginPassword').value=password;
+            closeModal();
+            toast('Cloud account created. Sign in now!','success');
+            return;
+        }catch(e){toast(e.message||'Firebase account failed','error');return;}
+    }
     DB.users.add({username,password,name,email,birthday:dob,role:'admin',createdAt:new Date().toISOString(),signupMethod:email.endsWith('@gmail.com')?'gmail':'manual'});
-    document.getElementById('loginUsername').value=username;
+    document.getElementById('loginUsername').value=email;
     document.getElementById('loginPassword').value=password;
     closeModal();
     toast('Account created. You can sign in now!','success');
 }
 function showForgotPassword() {
-    modal('🔑 Reset Password',`<label>Username or Email</label><input type="text" id="resetUser" placeholder="Username or email"><label>Date of Birth</label><input type="date" id="resetDob"><label>New Password</label><input type="password" id="resetNewPass" placeholder="New password"><label>Confirm Password</label><input type="password" id="resetNewPass2" placeholder="Confirm password"><button class="btn btn-primary btn-block" style="margin-top:12px" onclick="resetPassword()">Reset Password</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Use the same birthday entered during sign up.</p>`);
+    modal('🔑 Reset Password',`<label>Email</label><input type="email" id="resetUser" placeholder="your@email.com"><label>Date of Birth</label><input type="date" id="resetDob"><label>New Password</label><input type="password" id="resetNewPass" placeholder="New password"><label>Confirm Password</label><input type="password" id="resetNewPass2" placeholder="Confirm password"><button class="btn btn-primary btn-block" style="margin-top:12px" onclick="resetPassword()">Reset Password</button><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="sendFirebaseReset()">Email Reset Link</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud users can use Email Reset Link. Local users can use birthday verification.</p>`);
+}
+async function sendFirebaseReset() {
+    const email=document.getElementById('resetUser')?.value.trim().toLowerCase();
+    if(!email||!email.includes('@')){toast('Enter your email!','error');return;}
+    if(!initFirebase()){toast('Firebase not loaded yet.','error');return;}
+    try{await firebaseAuth.sendPasswordResetEmail(email);closeModal();toast('Reset email sent!','success');}
+    catch(e){toast(e.message||'Could not send reset email','error');}
 }
 function resetPassword() {
     const u=document.getElementById('resetUser')?.value.trim();
@@ -496,6 +609,14 @@ function handleLogo(e) { const f=e.target.files[0]; if(!f)return; const r=new Fi
 
 // ===== NAVIGATION =====
 function nav(page,el) { currentPage=page; document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); if(el)el.classList.add('active'); const c=document.getElementById('mainContent'); switch(page){case'dashboard':dash(c);break;case'pos':pos(c);break;case'products':prods(c);break;case'customers':custs(c);break;case'suppliers':supps(c);break;case'delivery':deliv(c);break;case'employees':emps(c);break;case'reports':reps(c);break;case'settings':sett(c);break;} }
+document.addEventListener('touchend',e=>{
+    const item=e.target.closest?.('.nav-item[data-page]');
+    if(item){e.preventDefault();nav(item.dataset.page,item);}
+},{passive:false});
+document.addEventListener('click',e=>{
+    const item=e.target.closest?.('.nav-item[data-page]');
+    if(item&&e.target.closest('.sidebar-nav')) nav(item.dataset.page,item);
+});
 
 // ===== DASHBOARD =====
 function dash(c) { const o=DB.orders.getAll(), today=new Date().toDateString(), to=o.filter(x=>new Date(x.timestamp).toDateString()===today), ts=to.reduce((s,x)=>s+x.total,0), wk=o.filter(x=>new Date(x.timestamp)>new Date(Date.now()-7*86400000)), lo=DB.products.getAll().filter(p=>(p.stock||0)<=(p.lowStockAlert||5));
