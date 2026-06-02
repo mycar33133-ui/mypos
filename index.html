@@ -453,16 +453,23 @@ function ac(n) { const c=['#F44336','#E91E63','#9C27B0','#673AB7','#3F51B5','#21
 function init(n) { return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 function getCategories() { return DB.categories.getAll().map(c=>typeof c==='string'?{id:c,name:c,imageUrl:''}:c); }
 function saveCategories(cats) { DB.categories.save(cats); }
+function setUploadLoading(message='Uploading photo...') {
+    const el=document.getElementById('uploadStatus');
+    if(el) el.innerHTML=`<div style="padding:10px;margin-top:8px;border-radius:10px;background:#E3F2FD;color:#1565C0;font-weight:600;text-align:center">${message}</div>`;
+}
 function readImageInput(id,cb) {
     const f=document.getElementById(id)?.files?.[0];
     if(!f)return cb('');
     const folder=id==='sLogo'?'shop-logo':(id==='catPhoto'?'categories':'products');
     if(initFirebase()&&currentFirebaseUser&&firebaseStorage){
+        setUploadLoading('Uploading photo to cloud...');
         uploadCloudFile(f,folder).then(url=>cb(url)).catch(()=>{
+            setUploadLoading('Cloud upload failed. Saving photo locally...');
             const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f);
         });
         return;
     }
+    setUploadLoading('Loading photo...');
     const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f);
 }
 function productPhoto(p) { return p?.imageUrl?`<img src="${p.imageUrl}">`:'📦'; }
@@ -967,7 +974,7 @@ function prods(c) {
     <div class="product-grid">${ps.map(p=>`<div class="product-card"><div class="product-img">${productPhoto(p)}</div><div class="product-name">${p.name}</div><div class="product-price">${fm(p.price)}</div><div class="product-stock">Category:${p.category||'Other'}<br>Stock:${p.stock||0}</div><button class="btn btn-xs btn-outline btn-block" onclick="showProdForm('${String(p.id).replace(/'/g,"\\'")}')">Edit</button></div>`).join('')}</div>`;
 }
 function showCatForm() {
-    modal('Add Category',`<label>Category Name</label><input type="text" id="catName"><label>Category Photo</label><input type="file" id="catPhoto" accept="image/*" capture="environment"><button class="btn btn-success btn-block" onclick="saveCategory()">Save Category</button>`);
+    modal('Add Category',`<label>Category Name</label><input type="text" id="catName"><label>Category Photo</label><input type="file" id="catPhoto" accept="image/*"><p style="font-size:12px;color:var(--gray);margin:4px 0 8px">Choose Gallery/File, or Camera if your phone offers it.</p><div id="uploadStatus"></div><button class="btn btn-success btn-block" onclick="saveCategory()">Save Category</button>`);
 }
 function saveCategory() {
     const name=document.getElementById('catName').value.trim();
@@ -984,7 +991,7 @@ function deleteCategory(id) {
 }
 function showProdForm(eid=null) {
     const p=eid?DB.products.getAll().find(x=>x.id===eid):null, cats=getCategories();
-    modal(p?'Edit Product':'Add Product',`<label>Name</label><input type="text" id="pfName" value="${p?.name||''}"><label>Price</label><input type="number" id="pfPrice" value="${p?.price||''}" step="0.01"><label>Stock</label><input type="number" id="pfStock" value="${p?.stock||0}"><label>Category</label><select id="pfCategory"><option value="">Other</option>${cats.map(c=>`<option value="${c.name}" ${p?.category===c.name?'selected':''}>${c.name}</option>`).join('')}</select><label>Product Photo / Camera</label><input type="file" id="pfImage" accept="image/*" capture="environment">${p?.imageUrl?'<p style="font-size:11px;color:var(--gray)">Leave empty to keep current photo.</p>':''}<button class="btn btn-success btn-block" onclick="saveProd(${eid||'null'})">Save</button>`);
+    modal(p?'Edit Product':'Add Product',`<label>Name</label><input type="text" id="pfName" value="${p?.name||''}"><label>Price</label><input type="number" id="pfPrice" value="${p?.price||''}" step="0.01"><label>Stock</label><input type="number" id="pfStock" value="${p?.stock||0}"><label>Category</label><select id="pfCategory"><option value="">Other</option>${cats.map(c=>`<option value="${c.name}" ${p?.category===c.name?'selected':''}>${c.name}</option>`).join('')}</select><label>Product Photo</label><input type="file" id="pfImage" accept="image/*"><p style="font-size:12px;color:var(--gray);margin:4px 0 8px">Choose Gallery/File, or Camera if your phone offers it.</p>${p?.imageUrl?'<p style="font-size:11px;color:var(--gray)">Leave empty to keep current photo.</p>':''}<div id="uploadStatus"></div><button class="btn btn-success btn-block" onclick="saveProd(${eid||'null'})">Save</button>`);
 }
 function saveProd(eid) {
     readImageInput('pfImage',img=>{const old=eid?DB.products.getAll().find(x=>String(x.id)===String(eid)):null; const d={id:old?.id||newId('prod'),name:document.getElementById('pfName').value.trim(),price:parseFloat(document.getElementById('pfPrice').value)||0,stock:parseInt(document.getElementById('pfStock').value)||0,category:document.getElementById('pfCategory').value,imageUrl:img||old?.imageUrl||''}; if(old){Object.assign(old,d);DB.products.update(old);}else{const products=DB.products.getAll();products.push(d);DB.products.save(products);} closeModal(); prods(document.getElementById('mainContent')); toast('Saved!','success');});
@@ -993,7 +1000,7 @@ function saveProd(eid) {
 // ===== SETTINGS =====
 function sett(c) { const s=DB.settings.get(); const cloud=DB.get('mp_cloud_backup'); c.innerHTML=`<div class="page-header"><h1>⚙️ ${tr('settings')}</h1></div>
 <div class="card"><div class="card-title">🔒 ${tr('account')}</div><p>${tr('user')}: <strong>${currentUser?.name||'Admin'}</strong></p><button class="btn btn-warning btn-block" onclick="showChangePassword()">🔑 Change Password</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="doLogout()">⏻ Logout</button></div>
-<div class="card"><div class="card-title">🏪 ${tr('shop')}</div><label>Shop Logo</label><input type="file" id="sLogo" accept="image/*"><label>${tr('nameLabel')}</label><input type="text" id="sName" value="${s.shopName}"><label>Tax No</label><input type="text" id="sTaxNo" value="${s.taxNo||''}"><label>${tr('phone')}</label><input type="text" id="sPhone" value="${s.phone}"><label>Email</label><input type="email" id="sEmail" value="${s.email||''}"><label>Address</label><textarea id="sAddress">${s.address||''}</textarea><label>Receipt Footer</label><input type="text" id="sFooter" value="${s.footerText||'Thanks for purchase 💕'}"><label>${tr('currency')}</label><select id="sCurr">${Object.entries(CURRENCIES).map(([k,v])=>`<option value="${k}" ${s.currency===k?'selected':''}>${v.symbol} ${v.name}</option>`).join('')}</select><label>${tr('language')}</label><select id="sLang">${Object.entries(LANGUAGES).map(([k,v])=>`<option value="${k}" ${s.language===k?'selected':''}>${v.name}</option>`).join('')}</select></div>
+<div class="card"><div class="card-title">🏪 ${tr('shop')}</div><label>Shop Logo</label><input type="file" id="sLogo" accept="image/*"><p style="font-size:12px;color:var(--gray);margin:4px 0 8px">Choose logo from Gallery/File.</p><div id="uploadStatus"></div><label>${tr('nameLabel')}</label><input type="text" id="sName" value="${s.shopName}"><label>Tax No</label><input type="text" id="sTaxNo" value="${s.taxNo||''}"><label>${tr('phone')}</label><input type="text" id="sPhone" value="${s.phone}"><label>Email</label><input type="email" id="sEmail" value="${s.email||''}"><label>Address</label><textarea id="sAddress">${s.address||''}</textarea><label>Receipt Footer</label><input type="text" id="sFooter" value="${s.footerText||'Thanks for purchase 💕'}"><label>${tr('currency')}</label><select id="sCurr">${Object.entries(CURRENCIES).map(([k,v])=>`<option value="${k}" ${s.currency===k?'selected':''}>${v.symbol} ${v.name}</option>`).join('')}</select><label>${tr('language')}</label><select id="sLang">${Object.entries(LANGUAGES).map(([k,v])=>`<option value="${k}" ${s.language===k?'selected':''}>${v.name}</option>`).join('')}</select></div>
 <div class="card"><div class="card-title">🎨 ${tr('theme')}</div><label><input type="checkbox" id="sDark" ${s.darkMode?'checked':''} onchange="toggleDark()"> ${tr('darkMode')}</label></div>
 <div class="card"><div class="card-title">☁️ ${tr('backup')}</div><div class="grid-2"><button class="btn btn-primary" onclick="downloadBackup()">💾 ${tr('download')}</button><button class="btn btn-outline" onclick="restoreBackup()">📥 ${tr('restore')}</button><button class="btn btn-success" onclick="googleDriveBackup()">☁️ ${tr('googleDrive')}</button><button class="btn btn-purple" onclick="cloudBackup()">☁️ ${tr('cloudBackup')}</button></div><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="restoreCloudBackup()">📥 ${tr('restoreCloud')}</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud slot: ${cloud?.date?new Date(cloud.date).toLocaleString():'No cloud backup yet'}</p></div>
 <button class="btn btn-success btn-block" onclick="saveAllSettings()">💾 ${tr('saveSettings')}</button>`;
