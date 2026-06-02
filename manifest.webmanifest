@@ -5,7 +5,7 @@
   "description": "Mobile point of sale app with products, cart, receipts, reports, customers, backups, and settings.",
   "start_url": "./?source=pwa",
   "scope": "./",
-  "display_override": ["fullscreen", "standalone"],
+  "display_override": ["standalone"],
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f0f2f5",
