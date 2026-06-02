@@ -23,6 +23,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
     <style>
         :root {
             --primary: #1565C0; --primary-dark: #0D47A1; --accent: #FF6F00;
@@ -342,7 +343,7 @@ const DB = {
 // ===== GLOBAL STATE =====
 let currentUser=null, currentPage='dashboard', cart=[], heldOrders=[];
 let posCategoryFilter='';
-let firebaseApp=null, firebaseAuth=null, firebaseDb=null, currentFirebaseUser=null, cloudSyncTimer=null, cloudLoading=false;
+let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseStorage=null, currentFirebaseUser=null, cloudSyncTimer=null, cloudLoading=false, cloudUnsubscribe=null;
 const firebaseConfig = {
     apiKey: "AIzaSyDLcvigi3ZlI-GHPlDrb3-BWlIxZS9Rqmw",
     authDomain: "mypos-dewi.firebaseapp.com",
@@ -357,11 +358,13 @@ function initFirebase() {
     firebaseApp=firebase.initializeApp(firebaseConfig);
     firebaseAuth=firebase.auth();
     firebaseDb=firebase.firestore();
+    firebaseStorage=firebase.storage();
     firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     firebaseAuth.onAuthStateChanged(async user=>{
         currentFirebaseUser=user||null;
         if(user && !currentUser){
             await loadCloudData(user);
+            startCloudListener(user);
             currentUser={username:user.email||user.uid,password:'',name:user.displayName||user.email||'User',email:user.email||'',birthday:'',role:'admin',firebaseUid:user.uid};
             DB.set('mp_current_user',currentUser.username);
             document.getElementById('loginScreen').style.display='none';
@@ -379,6 +382,33 @@ function scheduleCloudSync(key='') {
     clearTimeout(cloudSyncTimer);
     cloudSyncTimer=setTimeout(saveCloudData,900);
 }
+function applyCloudData(d) {
+    if(!d) return;
+    cloudLoading=true;
+    if(d.products)DB.products.save(d.products);
+    if(d.categories)DB.categories.save(d.categories);
+    if(d.customers)DB.customers.save(d.customers);
+    if(d.suppliers)DB.suppliers.save(d.suppliers);
+    if(d.orders)DB.orders.save(d.orders);
+    if(d.employees)DB.employees.save(d.employees);
+    if(d.delivery)DB.delivery.save(d.delivery);
+    if(d.settings)DB.settings.save(d.settings);
+    cloudLoading=false;
+}
+function refreshCurrentPage() {
+    if(!document.getElementById('appContainer')?.classList.contains('active')) return;
+    loadSettings();
+    nav(currentPage||'dashboard');
+}
+function startCloudListener(user) {
+    if(!firebaseDb||!user) return;
+    if(cloudUnsubscribe) cloudUnsubscribe();
+    cloudUnsubscribe=firebaseDb.collection('users').doc(user.uid).collection('mypos').doc('data').onSnapshot(snap=>{
+        if(!snap.exists) return;
+        applyCloudData(snap.data());
+        refreshCurrentPage();
+    },e=>console.warn('Cloud live sync failed',e));
+}
 async function saveCloudData() {
     if(!currentFirebaseUser||!firebaseDb) return;
     try{
@@ -391,19 +421,17 @@ async function loadCloudData(user) {
     try{
         cloudLoading=true;
         const snap=await firebaseDb.collection('users').doc(user.uid).collection('mypos').doc('data').get();
-        const d=snap.exists?snap.data():null;
-        if(d){
-            if(d.products)DB.products.save(d.products);
-            if(d.categories)DB.categories.save(d.categories);
-            if(d.customers)DB.customers.save(d.customers);
-            if(d.suppliers)DB.suppliers.save(d.suppliers);
-            if(d.orders)DB.orders.save(d.orders);
-            if(d.employees)DB.employees.save(d.employees);
-            if(d.delivery)DB.delivery.save(d.delivery);
-            if(d.settings)DB.settings.save(d.settings);
-        }
+        applyCloudData(snap.exists?snap.data():null);
     }catch(e){console.warn('Cloud load failed',e);}
     finally{cloudLoading=false;}
+}
+async function uploadCloudFile(file,folder='uploads') {
+    if(!file||!currentFirebaseUser||!firebaseStorage) return '';
+    const safe=file.name.replace(/[^a-z0-9._-]/gi,'_');
+    const path=`users/${currentFirebaseUser.uid}/${folder}/${Date.now()}_${safe}`;
+    const ref=firebaseStorage.ref(path);
+    await ref.put(file);
+    return await ref.getDownloadURL();
 }
 const CURRENCIES={USD:{symbol:'$',name:'USD'},EUR:{symbol:'�',name:'EUR'},GBP:{symbol:'�',name:'GBP'},INR:{symbol:'₹',name:'INR'},IDR:{symbol:'Rp',name:'IDR'},JPY:{symbol:'�',name:'JPY'},AUD:{symbol:'A$',name:'AUD'},CAD:{symbol:'C$',name:'CAD'}};
 const CHART_COLORS=['#1565C0','#4CAF50','#FF9800','#F44336','#9C27B0','#00BCD4','#FF5722','#795548','#607D8B','#E91E63','#3F51B5','#CDDC39'];
@@ -425,7 +453,18 @@ function ac(n) { const c=['#F44336','#E91E63','#9C27B0','#673AB7','#3F51B5','#21
 function init(n) { return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 function getCategories() { return DB.categories.getAll().map(c=>typeof c==='string'?{id:c,name:c,imageUrl:''}:c); }
 function saveCategories(cats) { DB.categories.save(cats); }
-function readImageInput(id,cb) { const f=document.getElementById(id)?.files?.[0]; if(!f)return cb(''); const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f); }
+function readImageInput(id,cb) {
+    const f=document.getElementById(id)?.files?.[0];
+    if(!f)return cb('');
+    const folder=id==='sLogo'?'shop-logo':(id==='catPhoto'?'categories':'products');
+    if(initFirebase()&&currentFirebaseUser&&firebaseStorage){
+        uploadCloudFile(f,folder).then(url=>cb(url)).catch(()=>{
+            const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f);
+        });
+        return;
+    }
+    const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f);
+}
 function productPhoto(p) { return p?.imageUrl?`<img src="${p.imageUrl}">`:'📦'; }
 function categoryPhoto(c) { return c?.imageUrl?`<img src="${c.imageUrl}">`:'🏷️'; }
 function newId(prefix='id') { return prefix+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
@@ -463,6 +502,7 @@ async function doLogin() {
         try{
             const cred=await firebaseAuth.signInWithEmailAndPassword(u,p);
             await loadCloudData(cred.user);
+            startCloudListener(cred.user);
             currentUser={username:cred.user.email,password:'',name:cred.user.displayName||cred.user.email,email:cred.user.email,birthday:'',role:'admin',firebaseUid:cred.user.uid};
             DB.set('mp_current_user',currentUser.username);
             document.getElementById('loginScreen').style.display='none';
@@ -477,7 +517,7 @@ async function doLogin() {
     if(user){currentUser=user;DB.set('mp_current_user',user.username);document.getElementById('loginScreen').style.display='none';document.getElementById('appContainer').classList.add('active');initApp();toast('Welcome!','success');}
     else{document.getElementById('loginError').style.display='block';}
 }
-function doLogout() { if(confirm('Logout?')){if(firebaseAuth)firebaseAuth.signOut().catch(()=>{});currentUser=null;currentFirebaseUser=null;cart=[];localStorage.removeItem('mp_current_user');document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
+function doLogout() { if(confirm('Logout?')){if(cloudUnsubscribe){cloudUnsubscribe();cloudUnsubscribe=null;}if(firebaseAuth)firebaseAuth.signOut().catch(()=>{});currentUser=null;currentFirebaseUser=null;cart=[];localStorage.removeItem('mp_current_user');document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
 function restoreLogin() {
     initFirebase();
     if(currentFirebaseUser) return true;
@@ -503,6 +543,7 @@ async function startGmailSignUp() {
         const provider=new firebase.auth.GoogleAuthProvider();
         const result=await firebaseAuth.signInWithPopup(provider);
         await loadCloudData(result.user);
+        startCloudListener(result.user);
         currentUser={username:result.user.email,password:'',name:result.user.displayName||result.user.email,email:result.user.email,birthday:'',role:'admin',firebaseUid:result.user.uid};
         DB.set('mp_current_user',currentUser.username);
         closeModal();
@@ -530,6 +571,7 @@ async function createAccount() {
             const cred=await firebaseAuth.createUserWithEmailAndPassword(email,password);
             await cred.user.updateProfile({displayName:name}).catch(()=>{});
             currentFirebaseUser=cred.user;
+            startCloudListener(cred.user);
             await firebaseDb.collection('users').doc(cred.user.uid).set({username,name,email,birthday:dob,role:'admin',createdAt:new Date().toISOString()},{merge:true});
             await saveCloudData();
             document.getElementById('loginUsername').value=email;
@@ -956,7 +998,7 @@ function sett(c) { const s=DB.settings.get(); const cloud=DB.get('mp_cloud_backu
 <div class="card"><div class="card-title">☁️ ${tr('backup')}</div><div class="grid-2"><button class="btn btn-primary" onclick="downloadBackup()">💾 ${tr('download')}</button><button class="btn btn-outline" onclick="restoreBackup()">📥 ${tr('restore')}</button><button class="btn btn-success" onclick="googleDriveBackup()">☁️ ${tr('googleDrive')}</button><button class="btn btn-purple" onclick="cloudBackup()">☁️ ${tr('cloudBackup')}</button></div><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="restoreCloudBackup()">📥 ${tr('restoreCloud')}</button><p style="font-size:11px;color:var(--gray);margin-top:8px">Cloud slot: ${cloud?.date?new Date(cloud.date).toLocaleString():'No cloud backup yet'}</p></div>
 <button class="btn btn-success btn-block" onclick="saveAllSettings()">💾 ${tr('saveSettings')}</button>`;
 }
-function saveAllSettings() { const old=DB.settings.get(); const next={...old,shopName:document.getElementById('sName').value,taxNo:document.getElementById('sTaxNo').value,phone:document.getElementById('sPhone').value,email:document.getElementById('sEmail').value,address:document.getElementById('sAddress').value,footerText:document.getElementById('sFooter').value,currency:document.getElementById('sCurr').value,language:document.getElementById('sLang').value,darkMode:document.getElementById('sDark').checked}; const file=document.getElementById('sLogo')?.files?.[0]; if(file){const r=new FileReader();r.onload=e=>{next.logoUrl=e.target.result;DB.settings.save(next);loadSettings();sett(document.getElementById('mainContent'));toast('Saved!','success');};r.readAsDataURL(file);}else{DB.settings.save(next);loadSettings();sett(document.getElementById('mainContent'));toast('Saved!','success');} }
+function saveAllSettings() { const old=DB.settings.get(); const next={...old,shopName:document.getElementById('sName').value,taxNo:document.getElementById('sTaxNo').value,phone:document.getElementById('sPhone').value,email:document.getElementById('sEmail').value,address:document.getElementById('sAddress').value,footerText:document.getElementById('sFooter').value,currency:document.getElementById('sCurr').value,language:document.getElementById('sLang').value,darkMode:document.getElementById('sDark').checked}; const file=document.getElementById('sLogo')?.files?.[0]; if(file){readImageInput('sLogo',url=>{next.logoUrl=url;DB.settings.save(next);loadSettings();sett(document.getElementById('mainContent'));toast('Saved!','success');});}else{DB.settings.save(next);loadSettings();sett(document.getElementById('mainContent'));toast('Saved!','success');} }
 function toggleDark() { document.body.classList.toggle('dark-mode');const s=DB.settings.get();s.darkMode=!s.darkMode;DB.settings.save(s); }
 function makeBackupData() { return {products:DB.products.getAll(),categories:DB.categories.getAll(),customers:DB.customers.getAll(),suppliers:DB.suppliers.getAll(),orders:DB.orders.getAll(),employees:DB.employees.getAll(),delivery:DB.delivery.getAll(),users:DB.users.getAll(),settings:DB.settings.get(),date:new Date().toISOString()}; }
 function downloadBackup() { const d=makeBackupData();const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='MyPOS_Backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Backup downloaded!','success'); }
