@@ -16,6 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
@@ -761,8 +762,47 @@ function completeSale() { const total=getSubtotal(),method=document.getElementBy
 function qrMarkup(text) { let seed=0; for(const ch of text) seed=(seed*31+ch.charCodeAt(0))>>>0; let cells=''; for(let y=0;y<21;y++){ for(let x=0;x<21;x++){ const finder=(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13); const inner=finder&&x%6>0&&x%6<6&&y%6>0&&y%6<6; const on=finder?(x%6===0||y%6===0||inner&&x%6>1&&x%6<5&&y%6>1&&y%6<5):(((x*17+y*29+seed+(x*y))%5)<2); cells+=`<span class="qr-cell ${on?'on':''}"></span>`; }} return `<div class="qr-receipt">${cells}</div>`; }
 function receiptHtml(order) { const s=DB.settings.get(), totalQty=order.items.reduce((a,i)=>a+Number(i.qty||0),0), invNo=String(order.orderNumber||order.id||'').replace(/\D/g,'').slice(-6)||order.id, paper=s.receiptPaper||'80mm', font=Number(s.receiptFontSize||13); return `<div class="receipt-print" style="width:${paper};font-size:${font}px">${s.showReceiptLogo!==false&&s.logoUrl?`<img class="receipt-logo" src="${s.logoUrl}">`:''}<h3>${s.shopName||'My Shop'}</h3><p class="receipt-center">${s.receiptTitle||'Simplified Tax Invoice'}</p>${s.showReceiptTax!==false&&s.taxNo?`<p class="receipt-center">TAX No:${s.taxNo}</p>`:''}${s.address?`<p class="receipt-center">${s.address}</p>`:''}${s.phone?`<p class="receipt-center">${s.phone}</p>`:''}<div class="receipt-meta"><p>Inv.Id#${order.id}</p><p>Inv No:${invNo}</p><p>Date:${new Date(order.timestamp).toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',weekday:'long',hour:'2-digit',minute:'2-digit'})}</p><p>Currency:${DB.settings.get().currency||'USD'}</p><p>Payment Method:${order.paymentMethod}</p>${s.showReceiptCustomer!==false&&order.customerName&&order.customerName!=='Walk-in'?`<p>Customer:${order.customerName}${order.customerPhone?' · '+order.customerPhone:''}</p>`:''}</div><table class="receipt-table"><thead><tr><th>Qty X Item</th><th>Price</th><th class="num">Amt</th></tr></thead><tbody>${order.items.map(i=>`<tr><td>${Number(i.qty||0).toFixed(1)}X ${i.name}</td><td>${Number(i.price||0).toFixed(2)}</td><td class="num">${Number(i.total||0).toFixed(2)}</td></tr>`).join('')}<tr class="receipt-summary"><td colspan="2">Total Qty: ${totalQty.toFixed(2)}</td><td class="num">Total Items: ${order.items.length}</td></tr><tr class="receipt-total-row"><td colspan="2" class="num">Sub Total</td><td class="num">${Number(order.subtotal||0).toFixed(2)}</td></tr><tr class="receipt-total-row"><td colspan="2" class="num">Payable</td><td class="num">${Number(order.total||0).toFixed(2)}</td></tr></tbody></table>${s.showReceiptQr!==false?qrMarkup(receiptText(order)):''}${s.showReceiptFooter!==false?`<p class="receipt-footer">${s.footerText||'Thanks for purchase 💕'}</p>`:''}</div>`; }
 function receiptText(order) { const s=DB.settings.get(); return `${s.shopName||'My Shop'}\n${s.receiptTitle||'Receipt'} ${order.orderNumber||order.id}\n${s.phone?`Phone: ${s.phone}\n`:''}${s.address?`${s.address}\n`:''}${s.showReceiptCustomer!==false?`\nCustomer: ${order.customerName||'Walk-in'}${order.customerPhone?' - '+order.customerPhone:''}`:''}\n\n${order.items.map(i=>`${i.name} x${i.qty} = ${fm(i.total)}`).join('\n')}\n\nSubtotal: ${fm(order.subtotal)}\nTax: ${fm(order.tax||0)}\nTotal: ${fm(order.total)}\nPaid by: ${order.paymentMethod}\n\n${s.showReceiptFooter!==false?(s.footerText||'Thank you!'):''}`; }
-function whatsappReceipt(orderId) { const order=DB.orders.getAll().find(o=>o.id===orderId); if(!order){toast('Receipt not found!','error');return;} const phone=(order.customerPhone||'').replace(/\D/g,''); const text=encodeURIComponent(receiptText(order)); window.open(phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`,'_blank'); }
-async function shareReceipt(orderId) { const order=DB.orders.getAll().find(o=>String(o.id)===String(orderId)); if(!order){toast('Receipt not found!','error');return;} const text=receiptText(order); if(navigator.share){try{await navigator.share({title:'Receipt',text});toast('Receipt shared!','success');}catch(e){}}else{try{await navigator.clipboard.writeText(text);toast('Receipt copied. Paste to share.','success');}catch(e){toast('Share not available on this device.','error');}} }
+async function makeReceiptFile(order) {
+    if(!window.html2canvas) throw new Error('Receipt image maker not loaded');
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;left:-9999px;top:0;background:#fff;padding:0;z-index:-1;';
+    wrap.innerHTML=receiptHtml(order);
+    document.body.appendChild(wrap);
+    const receipt=wrap.querySelector('.receipt-print');
+    const canvas=await html2canvas(receipt,{backgroundColor:'#ffffff',scale:2,useCORS:true,allowTaint:true});
+    document.body.removeChild(wrap);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob) throw new Error('Could not make receipt image');
+    const name=`receipt-${order.orderNumber||order.id}.png`;
+    return new File([blob],name,{type:'image/png'});
+}
+async function shareReceiptImage(order, preferWhatsapp=false) {
+    const file=await makeReceiptFile(order);
+    const text=receiptText(order);
+    if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+        await navigator.share({title:'Receipt',text,files:[file]});
+        toast(preferWhatsapp?'Choose WhatsApp to send receipt image.':'Receipt image shared!','success');
+        return true;
+    }
+    return false;
+}
+async function whatsappReceipt(orderId) {
+    const order=DB.orders.getAll().find(o=>String(o.id)===String(orderId));
+    if(!order){toast('Receipt not found!','error');return;}
+    try{if(await shareReceiptImage(order,true))return;}catch(e){}
+    const phone=(order.customerPhone||'').replace(/\D/g,'');
+    const text=encodeURIComponent(receiptText(order));
+    toast('Phone cannot share receipt image here. Opening WhatsApp text fallback.','info');
+    window.open(phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`,'_blank');
+}
+async function shareReceipt(orderId) {
+    const order=DB.orders.getAll().find(o=>String(o.id)===String(orderId));
+    if(!order){toast('Receipt not found!','error');return;}
+    try{if(await shareReceiptImage(order,false))return;}catch(e){}
+    const text=receiptText(order);
+    if(navigator.share){try{await navigator.share({title:'Receipt',text});toast('Receipt shared as text.','success');}catch(e){}}
+    else{try{await navigator.clipboard.writeText(text);toast('Receipt copied. Paste to share.','success');}catch(e){toast('Share not available on this device.','error');}}
+}
 function printReceipt() { const s=DB.settings.get(); const label={bluetooth:'Bluetooth printer',wifi:'WiFi / Network printer',usb:'USB / OTG printer',system:'System print'}[s.printerConnection||'system']; toast(`Opening print for ${label}. Choose printer on your phone.`, 'info'); setTimeout(()=>window.print(),250); }
 function showReceipt(order) { modal('🧾 Receipt',`${receiptHtml(order)}<div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="printReceipt()">🖨️ Print Receipt</button><button class="btn btn-success" onclick="whatsappReceipt(${order.id})">💬 WhatsApp Receipt</button><button class="btn btn-outline" onclick="shareReceipt(${order.id})">📤 Share Receipt</button><button class="btn btn-purple" onclick="nav('settings');closeModal()">⚙️ Receipt Settings</button></div>`); if(DB.settings.get().autoPrint)setTimeout(printReceipt,500); }
 function scanBarcode() { modal('📷 Scanner',`<div id="scanner"></div><input type="text" id="manualBarcode" placeholder="Barcode..."><button class="btn btn-primary btn-block" onclick="addByBarcode()">Add</button>`); try{new ZXing.BrowserMultiFormatReader().decodeFromVideoDevice(null,'scanner',(r,e)=>{if(r){const p=DB.products.getAll().find(x=>x.barcode===r.text);if(p){addToCart(p.id);closeModal();}}});}catch(e){document.getElementById('scanner').innerHTML='<p>Camera not available</p>';} }
