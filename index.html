@@ -778,33 +778,39 @@ async function makeReceiptFile(order) {
 }
 async function shareReceiptImage(order, preferWhatsapp=false) {
     const file=await makeReceiptFile(order);
-    const text=receiptText(order);
     if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
-        await navigator.share({title:'Receipt',text,files:[file]});
-        toast(preferWhatsapp?'Choose WhatsApp to send receipt image.':'Receipt image shared!','success');
+        await navigator.share({files:[file]});
+        toast(preferWhatsapp?'Choose WhatsApp to send receipt only.':'Receipt image shared!','success');
         return true;
     }
     return false;
+}
+async function openReceiptImage(order) {
+    const file=await makeReceiptFile(order);
+    const url=URL.createObjectURL(file);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=file.name;
+    a.target='_blank';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
 async function whatsappReceipt(orderId) {
     const order=DB.orders.getAll().find(o=>String(o.id)===String(orderId));
     if(!order){toast('Receipt not found!','error');return;}
     try{if(await shareReceiptImage(order,true))return;}catch(e){}
-    const phone=(order.customerPhone||'').replace(/\D/g,'');
-    const text=encodeURIComponent(receiptText(order));
-    toast('Phone cannot share receipt image here. Opening WhatsApp text fallback.','info');
-    window.open(phone?`https://wa.me/${phone}?text=${text}`:`https://wa.me/?text=${text}`,'_blank');
+    try{await openReceiptImage(order);toast('Receipt image downloaded. Send it in WhatsApp.','info');}
+    catch(e){toast('Could not make receipt image on this device.','error');}
 }
 async function shareReceipt(orderId) {
     const order=DB.orders.getAll().find(o=>String(o.id)===String(orderId));
     if(!order){toast('Receipt not found!','error');return;}
     try{if(await shareReceiptImage(order,false))return;}catch(e){}
-    const text=receiptText(order);
-    if(navigator.share){try{await navigator.share({title:'Receipt',text});toast('Receipt shared as text.','success');}catch(e){}}
-    else{try{await navigator.clipboard.writeText(text);toast('Receipt copied. Paste to share.','success');}catch(e){toast('Share not available on this device.','error');}}
+    try{await openReceiptImage(order);toast('Receipt image downloaded. Share the image file.','info');}
+    catch(e){toast('Share image not available on this device.','error');}
 }
 function printReceipt() { const s=DB.settings.get(); const label={bluetooth:'Bluetooth printer',wifi:'WiFi / Network printer',usb:'USB / OTG printer',system:'System print'}[s.printerConnection||'system']; toast(`Opening print for ${label}. Choose printer on your phone.`, 'info'); setTimeout(()=>window.print(),250); }
-function showReceipt(order) { modal('🧾 Receipt',`${receiptHtml(order)}<div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="printReceipt()">🖨️ Print Receipt</button><button class="btn btn-success" onclick="whatsappReceipt(${order.id})">💬 WhatsApp Receipt</button><button class="btn btn-outline" onclick="shareReceipt(${order.id})">📤 Share Receipt</button><button class="btn btn-purple" onclick="nav('settings');closeModal()">⚙️ Receipt Settings</button></div>`); if(DB.settings.get().autoPrint)setTimeout(printReceipt,500); }
+function showReceipt(order) { modal('🧾 Receipt',`${receiptHtml(order)}<div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="printReceipt()">🖨️ Printer</button><button class="btn btn-success" onclick="whatsappReceipt(${order.id})">💬 WhatsApp Receipt</button><button class="btn btn-outline" onclick="shareReceipt(${order.id})">📤 Share Receipt</button><button class="btn btn-purple" onclick="nav('settings');closeModal()">⚙️ Receipt Settings</button></div>`); if(DB.settings.get().autoPrint)setTimeout(printReceipt,500); }
 function scanBarcode() { modal('📷 Scanner',`<div id="scanner"></div><input type="text" id="manualBarcode" placeholder="Barcode..."><button class="btn btn-primary btn-block" onclick="addByBarcode()">Add</button>`); try{new ZXing.BrowserMultiFormatReader().decodeFromVideoDevice(null,'scanner',(r,e)=>{if(r){const p=DB.products.getAll().find(x=>x.barcode===r.text);if(p){addToCart(p.id);closeModal();}}});}catch(e){document.getElementById('scanner').innerHTML='<p>Camera not available</p>';} }
 function addByBarcode() { const b=document.getElementById('manualBarcode')?.value;if(b){const p=DB.products.getAll().find(x=>x.barcode===b);if(p){addToCart(p.id);closeModal();}else toast('Not found!','error');} }
 
