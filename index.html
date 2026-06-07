@@ -114,6 +114,8 @@
         input, select, textarea { width: 100%; padding: 12px 14px; border: 2px solid var(--light-gray); border-radius: 10px; font-size: 16px; transition: 0.2s; background: #fafafa; font-family: inherit; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; }
         label { display: block; font-size: 15px; font-weight: 600; margin-bottom: 5px; color: var(--gray); }
+        input[type="checkbox"] { width: 22px; height: 22px; padding: 0; margin: 0; flex: 0 0 22px; accent-color: var(--primary); }
+        label:has(input[type="checkbox"]) { display: flex; align-items: center; gap: 10px; min-height: 34px; margin: 10px 0; color: var(--text); }
 
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
         .product-card { background: white; border-radius: 12px; padding: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 6px rgba(0,0,0,0.06); position: relative; }
@@ -131,7 +133,9 @@
         .category-photo img { width: 100%; height: 100%; object-fit: cover; }
 
         .cart-item { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--light-gray); font-size: 15px; }
-        .cart-item-name { flex: 1; }
+        .cart-item-name { flex: 1; min-width: 0; }
+        .cart-qty-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .cart-qty-count { min-width: 20px; text-align: center; font-weight: 700; }
         .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--primary); background: white; color: var(--primary); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         .cart-item-total { font-weight: bold; min-width: 50px; text-align: right; }
         .summary-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 15px; }
@@ -227,11 +231,13 @@
             .pos-cart { position: sticky; bottom: 0; top: auto; z-index: 20; border: 2px solid var(--primary); box-shadow: 0 -10px 24px rgba(0,0,0,0.12); max-height: 44vh; display: flex; flex-direction: column; }
             .cart-list { flex: 0 0 auto; min-height: 82px; max-height: 118px; overflow-y: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--light-gray); border-bottom: 1px solid var(--light-gray); margin: 4px 0 8px; }
             .cart-item { padding: 6px 0; font-size: 14px; }
+            .qty-btn { width: 26px; height: 26px; font-size: 16px; }
+            .cart-qty-controls { gap: 4px; }
             .pos-cart .btn-block { padding: 13px; }
             .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
             .product-card { padding: 10px; min-height: 150px; }
             .product-img { height: 78px; font-size: 32px; }
-            .cart-item { align-items: flex-start; }
+            .cart-item { align-items: center; }
             .cart-item-total { min-width: 64px; }
         }
         @media (max-width: 340px) {
@@ -755,7 +761,9 @@ c.innerHTML=`<div class="page-header"><h1>🛒 Point of Sale</h1><button class="
 <button class="btn btn-success btn-block" onclick="processPayment()">💳 Complete - ${fm(getSubtotal())}</button></div></div>`;
 }
 function addToCart(pid) { ensureUniqueProductIds(); const p=DB.products.getAll().find(x=>String(x.id)===String(pid)); if(!p)return; const idx=cart.findIndex(i=>String(i.product.id)===String(pid)); if(idx>=0){const item=cart.splice(idx,1)[0];item.product=p;item.qty++;cart.unshift(item);}else{cart.unshift({product:p,qty:1});} pos(document.getElementById('mainContent')); }
-function renderCart() { if(cart.length===0) return '<p style="color:gray;text-align:center;padding:20px">Cart empty</p>'; return cart.map((i,idx)=>`<div class="cart-item"><div class="cart-item-name">${i.product.name} x${i.qty}</div><div class="cart-item-total">${fm(i.product.price*i.qty)}</div><span style="color:var(--red);cursor:pointer" onclick="cart.splice(${idx},1);pos(document.getElementById('mainContent'))">✕</span></div>`).join(''); }
+function changeCartQty(idx,delta) { if(!cart[idx])return; cart[idx].qty+=delta; if(cart[idx].qty<=0)cart.splice(idx,1); pos(document.getElementById('mainContent')); }
+function removeCartItem(idx) { if(!cart[idx])return; cart.splice(idx,1); pos(document.getElementById('mainContent')); }
+function renderCart() { if(cart.length===0) return '<p style="color:gray;text-align:center;padding:20px">Cart empty</p>'; return cart.map((i,idx)=>`<div class="cart-item"><div class="cart-item-name">${i.product.name}</div><div class="cart-qty-controls"><button class="qty-btn" onclick="changeCartQty(${idx},-1)">-</button><span class="cart-qty-count">${i.qty}</span><button class="qty-btn" onclick="changeCartQty(${idx},1)">+</button></div><div class="cart-item-total">${fm(i.product.price*i.qty)}</div><span style="color:var(--red);cursor:pointer;font-size:22px" onclick="removeCartItem(${idx})">×</span></div>`).join(''); }
 function getSubtotal() { return cart.reduce((s,i)=>s+(i.product.price*i.qty),0); }
 function processPayment() { if(cart.length===0){toast('Cart empty!','error');return;} const total=getSubtotal(); modal('💳 Payment',`<div style="text-align:center;font-size:36px;font-weight:bold;color:var(--primary)">${fm(total)}</div><label>Customer Name</label><input type="text" id="saleCustomerName" placeholder="Walk-in"><label>Phone Number</label><input type="tel" id="saleCustomerPhone" placeholder="Customer phone"><label>Payment Method</label><select id="payMethod"><option>Cash</option><option>Card</option><option>UPI</option></select><button class="btn btn-success btn-block" onclick="completeSale()">✅ Complete & Receipt</button>`); }
 function findOrSaveCustomer(name,phone) { name=(name||'').trim(); phone=(phone||'').trim(); if(!name&&!phone)return null; const all=DB.customers.getAll(); let c=all.find(x=>phone&&x.phone===phone); if(c){ if(name)c.name=name; DB.customers.update(c); return c; } return DB.customers.add({name:name||'Walk-in Customer',phone,email:'',birthday:''}); }
