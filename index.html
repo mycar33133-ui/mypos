@@ -596,6 +596,10 @@ async function publishPublicStoreData(showMessage=true) {
         const publicStore=makePublicStoreData();
         await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('public').doc('store').set(publicStore,{merge:true});
         await firebaseDb.collection('shops').doc(currentFirebaseUser.uid).set(publicStore,{merge:true}).catch(()=>{});
+        const verify=await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('public').doc('store').get();
+        if(!verify.exists) throw new Error('Public shop was not saved');
+        localStorage.setItem('mp_last_public_shop_id',currentFirebaseUser.uid);
+        localStorage.setItem('mp_last_public_shop_time',new Date().toLocaleString());
         if(showMessage) toast('Shop published. Online link is ready!','success');
         return true;
     }catch(e){
@@ -704,6 +708,14 @@ function normalizeSaleModes() {
     saveCategories(getCategories().map(c=>({...c,saleMode:itemMode(c)})));
 }
 function getOnlineShopLink() { const uid=currentFirebaseUser?.uid||currentUser?.firebaseUid||''; return uid?`${location.origin}${location.pathname}?online=${encodeURIComponent(uid)}`:''; }
+function getShopPublishStatus() {
+    const uid=currentFirebaseUser?.uid||'';
+    const lastId=localStorage.getItem('mp_last_public_shop_id')||'';
+    const lastTime=localStorage.getItem('mp_last_public_shop_time')||'';
+    if(!uid) return '';
+    const ok=lastId===uid&&lastTime;
+    return `<div style="font-size:12px;color:var(--gray);margin-top:8px;word-break:break-all">Your Shop ID: <strong>${uid}</strong><br>${ok?`Last published: ${lastTime}`:'This account is not confirmed published yet. Press Publish Shop.'}</div>`;
+}
 function setUploadLoading(message='Uploading photo...') {
     const el=document.getElementById('uploadStatus');
     if(el) el.innerHTML=`<div style="padding:10px;margin-top:8px;border-radius:10px;background:#E3F2FD;color:#1565C0;font-weight:600;text-align:center">${message}</div>`;
@@ -1139,7 +1151,7 @@ function onlineOrdersPage(c) {
     const orders=DB.onlineOrders.getAll();
     const link=getOnlineShopLink();
     c.innerHTML=`<div class="page-header"><h1>&#127760; Online Orders</h1><button class="btn btn-outline btn-sm" onclick="copyOnlineShopLink()">Copy Shop Link</button></div>
-    <div class="card"><div class="card-title">Customer Order Link</div>${link?`<input readonly value="${link}" onclick="this.select()"><div style="margin-top:10px">${qrMarkup(link)}</div><div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="copyOnlineShopLink()">Copy Link / QR</button><button class="btn btn-success" onclick="publishOnlineShop()">Publish Shop</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">Products published: ${DB.products.getAll().length}</p>`:'<p style="color:var(--gray)">Login with Firebase email first, then your online shop link will show here.</p>'}</div>
+    <div class="card"><div class="card-title">Customer Order Link</div>${link?`<input readonly value="${link}" onclick="this.select()"><div style="margin-top:10px">${qrMarkup(link)}</div><div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="copyOnlineShopLink()">Copy Link / QR</button><button class="btn btn-success" onclick="publishOnlineShop()">Publish Shop</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">Products published: ${DB.products.getAll().length}</p>${getShopPublishStatus()}`:'<p style="color:var(--gray)">Login with Firebase email first, then your online shop link will show here.</p>'}</div>
     <div class="card"><div class="card-title">&#128276; Push Notification</div><p id="pushStatusBox" style="color:var(--gray);margin-bottom:10px">${getPushStatusText()}</p><div class="grid-2"><button class="btn btn-primary" onclick="enablePushNotifications()">Enable Push</button><button class="btn btn-outline" onclick="testOrderAlert()">Test Alert</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">For closed-app phone notifications, keep this enabled and deploy the Firebase function.</p></div>
     ${orders.map(o=>`<div class="online-order-item"><div style="display:flex;justify-content:space-between;gap:8px"><strong>${o.orderNumber||o.id}</strong><span class="badge ${o.status==='new'?'badge-info':'badge-success'}">${o.status||'new'}</span></div><div class="online-order-meta">${fd(o.timestamp)}<br>${o.customerName||''}${o.customerPhone?' - '+o.customerPhone:''}<br>${o.address||''}</div><div style="margin-top:8px">${(o.items||[]).map(i=>`${i.name} x${i.qty} = ${fm(i.total||i.price*i.qty)}`).join('<br>')}</div><div class="summary-row total"><span>Total</span><span>${fm(o.total)}</span></div><div class="grid-2"><button class="btn btn-success" onclick="acceptOnlineOrder('${String(o.id).replace(/'/g,"\\'")}')">Accept Sale</button><button class="btn btn-outline" onclick="markOnlineOrderDone('${String(o.id).replace(/'/g,"\\'")}')">Mark Done</button></div></div>`).join('')||'<div class="card">No online orders yet.</div>'}`;
     updatePushStatusBox();
