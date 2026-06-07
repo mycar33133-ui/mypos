@@ -367,6 +367,7 @@ const DB = {
         save(s) { DB.set('mp_settings', s); }
     }
 };
+const BUSINESS_KEYS=['mp_products','mp_cats','mp_custs','mp_supps','mp_orders','mp_online_orders','mp_emps','mp_deliv','mp_settings','mp_cloud_backup'];
 
 // ===== GLOBAL STATE =====
 let currentUser=null, currentPage='dashboard', cart=[], onlineCart=[], heldOrders=[];
@@ -411,7 +412,9 @@ function makeCloudData() {
 }
 function makePublicStoreData() {
     const s=DB.settings.get();
-    return {products:DB.products.getAll(),categories:DB.categories.getAll(),settings:{shopName:s.shopName,phone:s.phone,address:s.address,email:s.email,currency:s.currency,logoUrl:s.logoUrl},updatedAt:new Date().toISOString()};
+    const products=DB.products.getAll().map(p=>({...p,saleMode:itemMode(p)}));
+    const categories=DB.categories.getAll().map(c=>({...c,saleMode:itemMode(c)}));
+    return {products,categories,settings:{shopName:s.shopName,phone:s.phone,address:s.address,email:s.email,currency:s.currency,logoUrl:s.logoUrl},updatedAt:new Date().toISOString()};
 }
 function scheduleCloudSync(key='') {
     if(cloudLoading||!currentFirebaseUser||!firebaseDb||key==='mp_current_user'||key==='mp_cloud_backup') return;
@@ -430,6 +433,14 @@ function applyCloudData(d) {
     if(d.employees)DB.employees.save(d.employees);
     if(d.delivery)DB.delivery.save(d.delivery);
     if(d.settings)DB.settings.save(d.settings);
+    cloudLoading=false;
+}
+function clearBusinessData() {
+    cloudLoading=true;
+    BUSINESS_KEYS.forEach(k=>localStorage.removeItem(k));
+    cart=[];
+    onlineCart=[];
+    heldOrders=[];
     cloudLoading=false;
 }
 function refreshCurrentPage() {
@@ -547,7 +558,9 @@ async function loadCloudData(user) {
     try{
         cloudLoading=true;
         const snap=await firebaseDb.collection('users').doc(user.uid).collection('mypos').doc('data').get();
-        applyCloudData(snap.exists?snap.data():null);
+        if(snap.exists) applyCloudData(snap.data());
+        else clearBusinessData();
+        localStorage.setItem('mp_firebase_uid',user.uid);
     }catch(e){console.warn('Cloud load failed',e);}
     finally{cloudLoading=false;}
 }
@@ -1070,7 +1083,7 @@ function onlineOrdersPage(c) {
     const orders=DB.onlineOrders.getAll();
     const link=getOnlineShopLink();
     c.innerHTML=`<div class="page-header"><h1>&#127760; Online Orders</h1><button class="btn btn-outline btn-sm" onclick="copyOnlineShopLink()">Copy Shop Link</button></div>
-    <div class="card"><div class="card-title">Customer Order Link</div>${link?`<input readonly value="${link}" onclick="this.select()"><div style="margin-top:10px">${qrMarkup(link)}</div><button class="btn btn-primary btn-block" onclick="copyOnlineShopLink()">Copy Link / QR</button>`:'<p style="color:var(--gray)">Login with Firebase email first, then your online shop link will show here.</p>'}</div>
+    <div class="card"><div class="card-title">Customer Order Link</div>${link?`<input readonly value="${link}" onclick="this.select()"><div style="margin-top:10px">${qrMarkup(link)}</div><div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="copyOnlineShopLink()">Copy Link / QR</button><button class="btn btn-success" onclick="publishOnlineShop()">Publish Shop</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">Products published: ${DB.products.getAll().length}</p>`:'<p style="color:var(--gray)">Login with Firebase email first, then your online shop link will show here.</p>'}</div>
     ${orders.map(o=>`<div class="online-order-item"><div style="display:flex;justify-content:space-between;gap:8px"><strong>${o.orderNumber||o.id}</strong><span class="badge ${o.status==='new'?'badge-info':'badge-success'}">${o.status||'new'}</span></div><div class="online-order-meta">${fd(o.timestamp)}<br>${o.customerName||''}${o.customerPhone?' - '+o.customerPhone:''}<br>${o.address||''}</div><div style="margin-top:8px">${(o.items||[]).map(i=>`${i.name} x${i.qty} = ${fm(i.total||i.price*i.qty)}`).join('<br>')}</div><div class="summary-row total"><span>Total</span><span>${fm(o.total)}</span></div><div class="grid-2"><button class="btn btn-success" onclick="acceptOnlineOrder('${String(o.id).replace(/'/g,"\\'")}')">Accept Sale</button><button class="btn btn-outline" onclick="markOnlineOrderDone('${String(o.id).replace(/'/g,"\\'")}')">Mark Done</button></div></div>`).join('')||'<div class="card">No online orders yet.</div>'}`;
 }
 async function copyOnlineShopLink() {
@@ -1078,6 +1091,12 @@ async function copyOnlineShopLink() {
     if(!link){toast('Login with Firebase first.','error');return;}
     await saveCloudData();
     try{await navigator.clipboard.writeText(link);toast('Online shop link copied!','success');}catch(e){toast('Select and copy the link.','info');}
+}
+async function publishOnlineShop() {
+    if(!currentFirebaseUser||!firebaseDb){toast('Login with Firebase first.','error');return;}
+    normalizeSaleModes();
+    await saveCloudData();
+    toast('Shop products published!','success');
 }
 async function updateOnlineOrderCloud(order) {
     if(currentFirebaseUser&&firebaseDb) await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('onlineOrders').doc(String(order.id)).set(order,{merge:true}).catch(()=>{});
