@@ -26,6 +26,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging-compat.js"></script>
     <style>
         :root {
             --primary: #1565C0; --primary-dark: #0D47A1; --accent: #FF6F00;
@@ -370,7 +371,8 @@ const DB = {
 // ===== GLOBAL STATE =====
 let currentUser=null, currentPage='dashboard', cart=[], onlineCart=[], heldOrders=[];
 let posCategoryFilter='', posMode='buy', onlineMode='buy';
-let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseStorage=null, currentFirebaseUser=null, cloudSyncTimer=null, cloudLoading=false, cloudUnsubscribe=null, onlineOrdersUnsubscribe=null, onlineOrdersReady=false, knownOnlineOrderIds=new Set();
+let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseStorage=null, firebaseMessaging=null, currentFirebaseUser=null, cloudSyncTimer=null, cloudLoading=false, cloudUnsubscribe=null, onlineOrdersUnsubscribe=null, onlineOrdersReady=false, knownOnlineOrderIds=new Set();
+const FCM_VAPID_KEY = 'BC__lWU6EK-naR1BHeAzfuHh7y8kseYxCqpKPMi9pbkGQVmpeThphna_uyZdzWGB79LymSGai-IbMKA60kWJU7k';
 const firebaseConfig = {
     apiKey: "AIzaSyDLcvigi3ZlI-GHPlDrb3-BWlIxZS9Rqmw",
     authDomain: "mypos-dewi.firebaseapp.com",
@@ -386,6 +388,7 @@ function initFirebase() {
     firebaseAuth=firebase.auth();
     firebaseDb=firebase.firestore();
     firebaseStorage=firebase.storage();
+    try{ if(firebase.messaging) firebaseMessaging=firebase.messaging(); }catch(e){ firebaseMessaging=null; }
     firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     firebaseAuth.onAuthStateChanged(async user=>{
         currentFirebaseUser=user||null;
@@ -397,6 +400,7 @@ function initFirebase() {
             document.getElementById('loginScreen').style.display='none';
             document.getElementById('appContainer').classList.add('active');
             initApp();
+            requestOrderNotificationPermission();
         }
     });
     return true;
@@ -473,12 +477,27 @@ function notifyOnlineOrders(orders) {
         }
     }catch(e){}
 }
-function requestOrderNotificationPermission() {
+async function requestOrderNotificationPermission() {
     try{
-        if('Notification' in window && Notification.permission==='default'){
-            Notification.requestPermission();
-        }
-    }catch(e){}
+        if(!('Notification' in window)) return;
+        let permission=Notification.permission;
+        if(permission==='default') permission=await Notification.requestPermission();
+        if(permission==='granted') await savePushToken();
+    }catch(e){console.warn('Notification permission failed',e);}
+}
+async function savePushToken() {
+    try{
+        if(!currentFirebaseUser||!firebaseDb||!firebaseMessaging||!('serviceWorker' in navigator)) return;
+        const registration=await navigator.serviceWorker.register('./sw.js');
+        const token=await firebaseMessaging.getToken({vapidKey:FCM_VAPID_KEY,serviceWorkerRegistration:registration});
+        if(!token) return;
+        await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('pushTokens').doc(token).set({
+            token,
+            platform:navigator.userAgent||'web',
+            updatedAt:new Date().toISOString()
+        },{merge:true});
+        localStorage.setItem('mp_push_token',token);
+    }catch(e){console.warn('Push token save failed',e);}
 }
 function vibrateOrderAlert() {
     try{
