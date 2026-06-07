@@ -1,7 +1,7 @@
 importScripts("https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging-compat.js");
 
-const CACHE_NAME = "mypos-cache-v41";
+const CACHE_NAME = "mypos-cache-v42";
 const firebaseConfig = {
   apiKey: "AIzaSyDLcvigi3ZlI-GHPlDrb3-BWlIxZS9Rqmw",
   authDomain: "mypos-dewi.firebaseapp.com",
@@ -19,8 +19,8 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || "New MyPOS Online Order";
   const options = {
     body: payload.notification?.body || payload.data?.body || "You have a new online order.",
-    icon: "./icon.svg",
-    badge: "./icon.svg",
+    icon: "https://mycar33133-ui.github.io/mypos/icon-192.png",
+    badge: "https://mycar33133-ui.github.io/mypos/icon-192.png",
     data: { url: payload.data?.url || "./?v=push-order#onlineOrders" },
     vibrate: [300, 150, 300]
   };

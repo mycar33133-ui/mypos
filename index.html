@@ -495,21 +495,55 @@ async function requestOrderNotificationPermission() {
         let permission=Notification.permission;
         if(permission==='default') permission=await Notification.requestPermission();
         if(permission==='granted') await savePushToken();
+        updatePushStatusBox();
     }catch(e){console.warn('Notification permission failed',e);}
 }
 async function savePushToken() {
     try{
-        if(!currentFirebaseUser||!firebaseDb||!firebaseMessaging||!('serviceWorker' in navigator)) return;
+        if(!currentFirebaseUser||!firebaseDb||!firebaseMessaging||!('serviceWorker' in navigator)) {
+            updatePushStatusBox('Push not ready. Login and check internet.');
+            return;
+        }
         const registration=await navigator.serviceWorker.register('./sw.js');
         const token=await firebaseMessaging.getToken({vapidKey:FCM_VAPID_KEY,serviceWorkerRegistration:registration});
-        if(!token) return;
+        if(!token) {
+            updatePushStatusBox('Push token not created yet.');
+            return;
+        }
         await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('pushTokens').doc(token).set({
             token,
             platform:navigator.userAgent||'web',
             updatedAt:new Date().toISOString()
         },{merge:true});
         localStorage.setItem('mp_push_token',token);
-    }catch(e){console.warn('Push token save failed',e);}
+        updatePushStatusBox('Push notification ready.');
+    }catch(e){console.warn('Push token save failed',e);updatePushStatusBox('Push token failed. Check Firebase rules and internet.');}
+}
+function getPushStatusText(extra='') {
+    const permission=('Notification' in window)?Notification.permission:'not supported';
+    const token=localStorage.getItem('mp_push_token');
+    if(extra) return extra;
+    if(!currentFirebaseUser) return 'Login with Firebase first.';
+    if(permission==='denied') return 'Notification blocked. Enable notification in browser/app settings.';
+    if(permission==='default') return 'Notification permission not allowed yet.';
+    if(token) return 'Push notification ready.';
+    return 'Push token not saved yet.';
+}
+function updatePushStatusBox(extra='') {
+    const box=document.getElementById('pushStatusBox');
+    if(!box) return;
+    const permission=('Notification' in window)?Notification.permission:'not supported';
+    const token=localStorage.getItem('mp_push_token');
+    box.innerHTML=`<strong>Push Status:</strong> ${getPushStatusText(extra)}<br><small>Permission: ${permission}${token?' | Token saved':''}</small>`;
+}
+async function enablePushNotifications() {
+    await requestOrderNotificationPermission();
+    const msg=getPushStatusText();
+    toast(msg, msg.includes('ready')?'success':'info');
+}
+function testOrderAlert() {
+    notifyOnlineOrders([{customerName:'Test Customer',total:1000,items:[{name:'Test',qty:1}],id:'test'}]);
+    toast('Local alert test sent. Cloud push needs a new online order.','info');
 }
 function vibrateOrderAlert() {
     try{
@@ -1091,7 +1125,9 @@ function onlineOrdersPage(c) {
     const link=getOnlineShopLink();
     c.innerHTML=`<div class="page-header"><h1>&#127760; Online Orders</h1><button class="btn btn-outline btn-sm" onclick="copyOnlineShopLink()">Copy Shop Link</button></div>
     <div class="card"><div class="card-title">Customer Order Link</div>${link?`<input readonly value="${link}" onclick="this.select()"><div style="margin-top:10px">${qrMarkup(link)}</div><div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="copyOnlineShopLink()">Copy Link / QR</button><button class="btn btn-success" onclick="publishOnlineShop()">Publish Shop</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">Products published: ${DB.products.getAll().length}</p>`:'<p style="color:var(--gray)">Login with Firebase email first, then your online shop link will show here.</p>'}</div>
+    <div class="card"><div class="card-title">&#128276; Push Notification</div><p id="pushStatusBox" style="color:var(--gray);margin-bottom:10px">${getPushStatusText()}</p><div class="grid-2"><button class="btn btn-primary" onclick="enablePushNotifications()">Enable Push</button><button class="btn btn-outline" onclick="testOrderAlert()">Test Alert</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">For closed-app phone notifications, keep this enabled and deploy the Firebase function.</p></div>
     ${orders.map(o=>`<div class="online-order-item"><div style="display:flex;justify-content:space-between;gap:8px"><strong>${o.orderNumber||o.id}</strong><span class="badge ${o.status==='new'?'badge-info':'badge-success'}">${o.status||'new'}</span></div><div class="online-order-meta">${fd(o.timestamp)}<br>${o.customerName||''}${o.customerPhone?' - '+o.customerPhone:''}<br>${o.address||''}</div><div style="margin-top:8px">${(o.items||[]).map(i=>`${i.name} x${i.qty} = ${fm(i.total||i.price*i.qty)}`).join('<br>')}</div><div class="summary-row total"><span>Total</span><span>${fm(o.total)}</span></div><div class="grid-2"><button class="btn btn-success" onclick="acceptOnlineOrder('${String(o.id).replace(/'/g,"\\'")}')">Accept Sale</button><button class="btn btn-outline" onclick="markOnlineOrderDone('${String(o.id).replace(/'/g,"\\'")}')">Mark Done</button></div></div>`).join('')||'<div class="card">No online orders yet.</div>'}`;
+    updatePushStatusBox();
 }
 async function copyOnlineShopLink() {
     const link=getOnlineShopLink();
