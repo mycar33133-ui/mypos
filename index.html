@@ -414,7 +414,7 @@ function makePublicStoreData() {
     const s=DB.settings.get();
     const products=DB.products.getAll().map(p=>({...p,saleMode:itemMode(p)}));
     const categories=DB.categories.getAll().map(c=>({...c,saleMode:itemMode(c)}));
-    return {products,categories,settings:{shopName:s.shopName,phone:s.phone,address:s.address,email:s.email,currency:s.currency,logoUrl:s.logoUrl},updatedAt:new Date().toISOString()};
+    return {ownerId:currentFirebaseUser?.uid||currentUser?.firebaseUid||'',products,categories,settings:{shopName:s.shopName,phone:s.phone,address:s.address,email:s.email,currency:s.currency,logoUrl:s.logoUrl},updatedAt:new Date().toISOString()};
 }
 function scheduleCloudSync(key='') {
     if(cloudLoading||!currentFirebaseUser||!firebaseDb||key==='mp_current_user'||key==='mp_cloud_backup') return;
@@ -548,9 +548,11 @@ function playOrderAlertSound() {
 async function saveCloudData() {
     if(!currentFirebaseUser||!firebaseDb) return;
     try{
+        const publicStore=makePublicStoreData();
         await firebaseDb.collection('users').doc(currentFirebaseUser.uid).set({email:currentFirebaseUser.email||'',name:currentUser?.name||currentFirebaseUser.displayName||'',lastSeen:new Date().toISOString()},{merge:true});
         await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('mypos').doc('data').set(makeCloudData(),{merge:true});
-        await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('public').doc('store').set(makePublicStoreData(),{merge:true});
+        await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('public').doc('store').set(publicStore,{merge:true});
+        await firebaseDb.collection('shops').doc(currentFirebaseUser.uid).set(publicStore,{merge:true}).catch(()=>{});
     }catch(e){console.warn('Cloud sync failed',e);}
 }
 async function loadCloudData(user) {
@@ -902,9 +904,14 @@ async function showOnlineStore(shopId) {
     initFirebase();
     document.body.innerHTML='<div id="onlineStore" class="online-store"><div class="online-header"><h1>Toko Online</h1><p>Memuat produk...</p></div></div><div class="modal-overlay" id="globalModal"><div class="modal-content" id="globalModalContent"></div></div><div class="toast-container" id="toastContainer"></div>';
     try{
-        const snap=await firebaseDb.collection('users').doc(shopId).collection('public').doc('store').get();
-        if(!snap.exists){document.getElementById('onlineStore').innerHTML='<div class="online-header"><h1>Toko tidak ditemukan</h1><p>Silakan periksa link QR.</p></div>';return;}
-        const data=snap.data();
+        let data=null;
+        const userStore=await firebaseDb.collection('users').doc(shopId).collection('public').doc('store').get().catch(()=>null);
+        if(userStore?.exists) data=userStore.data();
+        if(!data || !(data.products||[]).length){
+            const shopStore=await firebaseDb.collection('shops').doc(shopId).get().catch(()=>null);
+            if(shopStore?.exists) data=shopStore.data();
+        }
+        if(!data){document.getElementById('onlineStore').innerHTML='<div class="online-header"><h1>Toko tidak ditemukan</h1><p>Silakan periksa link QR.</p></div>';return;}
         window.onlineShop={shopId,data,products:data.products||[],categories:(data.categories||[]).map(c=>typeof c==='string'?{name:c}:c),settings:{...(data.settings||{}),shopLanguage:(data.settings&&data.settings.shopLanguage)||'id'}};
         renderOnlineStore();
     }catch(e){document.getElementById('onlineStore').innerHTML='<div class="online-header"><h1>Tidak bisa membuka toko</h1><p>Periksa internet lalu coba lagi.</p></div>';}
