@@ -582,12 +582,27 @@ function playOrderAlertSound() {
 async function saveCloudData() {
     if(!currentFirebaseUser||!firebaseDb) return;
     try{
-        const publicStore=makePublicStoreData();
         await firebaseDb.collection('users').doc(currentFirebaseUser.uid).set({email:currentFirebaseUser.email||'',name:currentUser?.name||currentFirebaseUser.displayName||'',lastSeen:new Date().toISOString()},{merge:true});
         await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('mypos').doc('data').set(makeCloudData(),{merge:true});
+        await publishPublicStoreData(false);
+    }catch(e){console.warn('Cloud sync failed',e);}
+}
+async function publishPublicStoreData(showMessage=true) {
+    if(!currentFirebaseUser||!firebaseDb) {
+        if(showMessage) toast('Login with Firebase first.','error');
+        return false;
+    }
+    try{
+        const publicStore=makePublicStoreData();
         await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('public').doc('store').set(publicStore,{merge:true});
         await firebaseDb.collection('shops').doc(currentFirebaseUser.uid).set(publicStore,{merge:true}).catch(()=>{});
-    }catch(e){console.warn('Cloud sync failed',e);}
+        if(showMessage) toast('Shop published. Online link is ready!','success');
+        return true;
+    }catch(e){
+        console.warn('Public shop publish failed',e);
+        if(showMessage) toast('Publish failed. Check Firestore rules.','error');
+        return false;
+    }
 }
 async function loadCloudData(user) {
     if(!firebaseDb||!user) return;
@@ -945,7 +960,7 @@ async function showOnlineStore(shopId) {
             const shopStore=await firebaseDb.collection('shops').doc(shopId).get().catch(()=>null);
             if(shopStore?.exists) data=shopStore.data();
         }
-        if(!data){document.getElementById('onlineStore').innerHTML='<div class="online-header"><h1>Toko tidak ditemukan</h1><p>Silakan periksa link QR.</p></div>';return;}
+        if(!data){document.getElementById('onlineStore').innerHTML='<div class="online-header"><h1>Toko belum dipublish</h1><p>Pemilik toko harus login MyPOS, buka menu Online, lalu tekan Publish Shop.</p></div>';return;}
         window.onlineShop={shopId,data,products:data.products||[],categories:(data.categories||[]).map(c=>typeof c==='string'?{name:c}:c),settings:{...(data.settings||{}),shopLanguage:(data.settings&&data.settings.shopLanguage)||'id'}};
         renderOnlineStore();
     }catch(e){document.getElementById('onlineStore').innerHTML='<div class="online-header"><h1>Tidak bisa membuka toko</h1><p>Periksa internet lalu coba lagi.</p></div>';}
@@ -1138,8 +1153,9 @@ async function copyOnlineShopLink() {
 async function publishOnlineShop() {
     if(!currentFirebaseUser||!firebaseDb){toast('Login with Firebase first.','error');return;}
     normalizeSaleModes();
-    await saveCloudData();
-    toast('Shop products published!','success');
+    await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('mypos').doc('data').set(makeCloudData(),{merge:true}).catch(()=>{});
+    const ok=await publishPublicStoreData(true);
+    if(ok) onlineOrdersPage(document.getElementById('mainContent'));
 }
 async function updateOnlineOrderCloud(order) {
     if(currentFirebaseUser&&firebaseDb) await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('onlineOrders').doc(String(order.id)).set(order,{merge:true}).catch(()=>{});
