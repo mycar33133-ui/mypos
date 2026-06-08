@@ -1,7 +1,7 @@
 importScripts("https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging-compat.js");
 
-const CACHE_NAME = "mypos-cache-v42";
+const CACHE_NAME = "mypos-cache-v43";
 const firebaseConfig = {
   apiKey: "AIzaSyDLcvigi3ZlI-GHPlDrb3-BWlIxZS9Rqmw",
   authDomain: "mypos-dewi.firebaseapp.com",
@@ -37,6 +37,7 @@ const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./firebase-messaging-sw.js",
   "./icon.svg"
 ];
 
