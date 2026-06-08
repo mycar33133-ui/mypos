@@ -507,8 +507,21 @@ function notifyOnlineOrders(orders) {
         }
     }catch(e){}
 }
+function syncAndroidPushUser() {
+    try{
+        if(window.MyPOSAndroid && currentFirebaseUser){
+            window.MyPOSAndroid.setUser(currentFirebaseUser.uid,currentFirebaseUser.email||'');
+        }
+    }catch(e){}
+}
+function clearAndroidPushUser() {
+    try{
+        if(window.MyPOSAndroid) window.MyPOSAndroid.clearUser();
+    }catch(e){}
+}
 async function requestOrderNotificationPermission() {
     try{
+        syncAndroidPushUser();
         if(!('Notification' in window)) return;
         let permission=Notification.permission;
         if(permission==='default') permission=await Notification.requestPermission();
@@ -543,6 +556,7 @@ function getPushStatusText(extra='') {
     const permission=('Notification' in window)?Notification.permission:'not supported';
     const token=localStorage.getItem('mp_push_token');
     if(extra) return extra;
+    if(window.MyPOSAndroid) return 'APK native push ready after Firebase rule allows token save.';
     if(!currentFirebaseUser) return 'Login with Firebase first.';
     if(permission==='denied') return 'Notification blocked. Enable notification in browser/app settings.';
     if(permission==='default') return 'Notification permission not allowed yet.';
@@ -554,9 +568,16 @@ function updatePushStatusBox(extra='') {
     if(!box) return;
     const permission=('Notification' in window)?Notification.permission:'not supported';
     const token=localStorage.getItem('mp_push_token');
-    box.innerHTML=`<strong>Push Status:</strong> ${getPushStatusText(extra)}<br><small>Permission: ${permission}${token?' | Token saved':''}</small>`;
+    const native=window.MyPOSAndroid?' | APK native mode':'';
+    box.innerHTML=`<strong>Push Status:</strong> ${getPushStatusText(extra)}<br><small>Permission: ${permission}${token?' | Token saved':''}${native}</small>`;
 }
 async function enablePushNotifications() {
+    syncAndroidPushUser();
+    if(window.MyPOSAndroid){
+        toast('APK native push connected. Test with a new online order.','success');
+        updatePushStatusBox();
+        return;
+    }
     await requestOrderNotificationPermission();
     const msg=getPushStatusText();
     toast(msg, msg.includes('ready')?'success':'info');
@@ -866,7 +887,7 @@ async function doLogin() {
     if(user){currentUser=user;DB.set('mp_current_user',user.username);document.getElementById('loginScreen').style.display='none';document.getElementById('appContainer').classList.add('active');initApp();requestOrderNotificationPermission();toast('Welcome!','success');}
     else{document.getElementById('loginError').style.display='block';}
 }
-function doLogout() { if(confirm('Logout?')){if(cloudUnsubscribe){cloudUnsubscribe();cloudUnsubscribe=null;}if(onlineOrdersUnsubscribe){onlineOrdersUnsubscribe();onlineOrdersUnsubscribe=null;}if(firebaseAuth)firebaseAuth.signOut().catch(()=>{});currentUser=null;currentFirebaseUser=null;cart=[];localStorage.removeItem('mp_current_user');document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
+function doLogout() { if(confirm('Logout?')){clearAndroidPushUser();if(cloudUnsubscribe){cloudUnsubscribe();cloudUnsubscribe=null;}if(onlineOrdersUnsubscribe){onlineOrdersUnsubscribe();onlineOrdersUnsubscribe=null;}if(firebaseAuth)firebaseAuth.signOut().catch(()=>{});currentUser=null;currentFirebaseUser=null;cart=[];localStorage.removeItem('mp_current_user');document.getElementById('loginScreen').style.display='flex';document.getElementById('appContainer').classList.remove('active');} }
 function restoreLogin() {
     initFirebase();
     if(currentFirebaseUser) return true;
