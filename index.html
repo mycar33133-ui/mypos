@@ -604,8 +604,23 @@ async function publishPublicStoreData(showMessage=true) {
         return true;
     }catch(e){
         console.warn('Public shop publish failed',e);
-        if(showMessage) toast('Publish failed. Check Firestore rules.','error');
+        const msg=(e.code||e.message||'Publish failed').toString();
+        if(showMessage) toast(`Publish failed: ${msg}`,'error');
         return false;
+    }
+}
+async function checkPublicShopStatus() {
+    if(!currentFirebaseUser||!firebaseDb){toast('Login with Firebase first.','error');return;}
+    try{
+        const snap=await firebaseDb.collection('users').doc(currentFirebaseUser.uid).collection('public').doc('store').get();
+        if(snap.exists){
+            const data=snap.data()||{}, count=(data.products||[]).length;
+            toast(`Shop is published. Products: ${count}`,'success');
+        }else{
+            toast('Not published yet. Press Publish Shop.','error');
+        }
+    }catch(e){
+        toast(`Check failed: ${(e.code||e.message||'Firebase error')}`,'error');
     }
 }
 async function loadCloudData(user) {
@@ -1151,7 +1166,7 @@ function onlineOrdersPage(c) {
     const orders=DB.onlineOrders.getAll();
     const link=getOnlineShopLink();
     c.innerHTML=`<div class="page-header"><h1>&#127760; Online Orders</h1><button class="btn btn-outline btn-sm" onclick="copyOnlineShopLink()">Copy Shop Link</button></div>
-    <div class="card"><div class="card-title">Customer Order Link</div>${link?`<input readonly value="${link}" onclick="this.select()"><div style="margin-top:10px">${qrMarkup(link)}</div><div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="copyOnlineShopLink()">Copy Link / QR</button><button class="btn btn-success" onclick="publishOnlineShop()">Publish Shop</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">Products published: ${DB.products.getAll().length}</p>${getShopPublishStatus()}`:'<p style="color:var(--gray)">Login with Firebase email first, then your online shop link will show here.</p>'}</div>
+    <div class="card"><div class="card-title">Customer Order Link</div>${link?`<input readonly value="${link}" onclick="this.select()"><div style="margin-top:10px">${qrMarkup(link)}</div><div class="grid-2" style="margin-top:10px"><button class="btn btn-primary" onclick="copyOnlineShopLink()">Copy Link / QR</button><button class="btn btn-success" onclick="publishOnlineShop()">Publish Shop</button></div><button class="btn btn-outline btn-block" style="margin-top:8px" onclick="checkPublicShopStatus()">Check Publish</button><p style="font-size:12px;color:var(--gray);margin-top:8px">Products published: ${DB.products.getAll().length}</p>${getShopPublishStatus()}`:'<p style="color:var(--gray)">Login with Firebase email first, then your online shop link will show here.</p>'}</div>
     <div class="card"><div class="card-title">&#128276; Push Notification</div><p id="pushStatusBox" style="color:var(--gray);margin-bottom:10px">${getPushStatusText()}</p><div class="grid-2"><button class="btn btn-primary" onclick="enablePushNotifications()">Enable Push</button><button class="btn btn-outline" onclick="testOrderAlert()">Test Alert</button></div><p style="font-size:12px;color:var(--gray);margin-top:8px">For closed-app phone notifications, keep this enabled and deploy the Firebase function.</p></div>
     ${orders.map(o=>`<div class="online-order-item"><div style="display:flex;justify-content:space-between;gap:8px"><strong>${o.orderNumber||o.id}</strong><span class="badge ${o.status==='new'?'badge-info':'badge-success'}">${o.status||'new'}</span></div><div class="online-order-meta">${fd(o.timestamp)}<br>${o.customerName||''}${o.customerPhone?' - '+o.customerPhone:''}<br>${o.address||''}</div><div style="margin-top:8px">${(o.items||[]).map(i=>`${i.name} x${i.qty} = ${fm(i.total||i.price*i.qty)}`).join('<br>')}</div><div class="summary-row total"><span>Total</span><span>${fm(o.total)}</span></div><div class="grid-2"><button class="btn btn-success" onclick="acceptOnlineOrder('${String(o.id).replace(/'/g,"\\'")}')">Accept Sale</button><button class="btn btn-outline" onclick="markOnlineOrderDone('${String(o.id).replace(/'/g,"\\'")}')">Mark Done</button></div></div>`).join('')||'<div class="card">No online orders yet.</div>'}`;
     updatePushStatusBox();
