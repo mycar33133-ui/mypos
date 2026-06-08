@@ -412,9 +412,27 @@ function makeCloudData() {
 }
 function makePublicStoreData() {
     const s=DB.settings.get();
-    const products=DB.products.getAll().map(p=>({...p,saleMode:itemMode(p)}));
-    const categories=DB.categories.getAll().map(c=>({...c,saleMode:itemMode(c)}));
-    return {ownerId:currentFirebaseUser?.uid||currentUser?.firebaseUid||'',products,categories,settings:{shopName:s.shopName,phone:s.phone,address:s.address,email:s.email,currency:s.currency,logoUrl:s.logoUrl},updatedAt:new Date().toISOString()};
+    const cleanPhoto=url=> {
+        if(!url) return '';
+        if(String(url).startsWith('data:image') && String(url).length>120000) return '';
+        return url;
+    };
+    const products=DB.products.getAll().map(p=>({
+        id:p.id,
+        name:p.name||'',
+        price:Number(p.price)||0,
+        stock:Number(p.stock)||0,
+        category:p.category||'',
+        imageUrl:cleanPhoto(p.imageUrl),
+        saleMode:itemMode(p)
+    }));
+    const categories=getCategories().map(c=>({
+        id:c.id||c.name,
+        name:c.name||'',
+        imageUrl:cleanPhoto(c.imageUrl),
+        saleMode:itemMode(c)
+    }));
+    return {ownerId:currentFirebaseUser?.uid||currentUser?.firebaseUid||'',products,categories,settings:{shopName:s.shopName,phone:s.phone,address:s.address,email:s.email,currency:s.currency,logoUrl:cleanPhoto(s.logoUrl),shopLanguage:s.language||'id'},updatedAt:new Date().toISOString()};
 }
 function scheduleCloudSync(key='') {
     if(cloudLoading||!currentFirebaseUser||!firebaseDb||key==='mp_current_user'||key==='mp_cloud_backup') return;
